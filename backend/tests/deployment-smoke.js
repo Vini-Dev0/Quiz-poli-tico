@@ -48,7 +48,7 @@ try {
   assert.equal(databaseReady, true, 'PostgreSQL de teste não ficou pronto.');
 
   docker(['run', '-d', '--name', app, '--network', network,
-    '-e', 'APP_URL=https://quiz.example.com', '-e', 'TRUST_PROXY=1',
+    '-e', 'APP_URL=https://quiz.example.com,https://test.example.com', '-e', 'TRUST_PROXY=1',
     '-e', 'DATABASE_URL', '-e', 'ADMIN_PASSWORD', '-e', 'JWT_SECRET', image],
     { env: { ...process.env, DATABASE_URL: `postgresql://quiz:${password}@${database}:5432/quiz?schema=public`, ADMIN_PASSWORD: adminPassword, JWT_SECRET: randomBytes(48).toString('hex') } });
   await untilHealthy();
@@ -59,9 +59,11 @@ try {
   const flow = `
     import assert from 'node:assert/strict';
     const origin = 'http://127.0.0.1:3000';
+    const publicOrigins = process.env.APP_URL.split(',');
+    const proxyHeaders = url => ({Origin:url, 'X-Forwarded-Host':new URL(url).host, 'X-Forwarded-Proto':'https'});
     async function api(path, method='GET', body, headers={}) {
       const response = await fetch(origin + '/api' + path, {
-        method, headers: {'Content-Type':'application/json', Origin:process.env.APP_URL, ...headers},
+        method, headers: {'Content-Type':'application/json', ...proxyHeaders(publicOrigins[0]), ...headers},
         ...(body ? {body:JSON.stringify(body)} : {})
       });
       assert.ok(response.ok, method + ' ' + path + ': ' + response.status);
@@ -75,8 +77,19 @@ try {
     const answers = Object.fromEntries(catalogue.questions.map(q=>[q.id,3]));
     const result = (await api('/quiz/'+started.uuid+'/complete','POST',{answers},{'X-Quiz-Token':started.token})).data;
     assert.equal(result.politicalLabel,'Centro');
-    const publicResult = await fetch(origin + '/resultado/' + started.uuid);
-    assert.match(await publicResult.text(), /og:title/);
+    for (const publicOrigin of publicOrigins) {
+      const headers = proxyHeaders(publicOrigin);
+      const url = publicOrigin + '/resultado/' + started.uuid;
+      const completed = (await api('/quiz/'+started.uuid+'/complete','POST',{answers},{...headers,'X-Quiz-Token':started.token})).data;
+      assert.equal(completed.resultUrl,url);
+      const resumed = (await api('/quiz/'+started.uuid,'GET',undefined,{...headers,'X-Quiz-Token':started.token})).data;
+      assert.equal(resumed.resultUrl,url);
+      const publicResult = await fetch(origin + '/resultado/' + started.uuid,{headers});
+      const html = await publicResult.text();
+      assert.match(html,/og:title/);
+      assert.ok(html.includes('<link rel="canonical" href="'+url+'">'));
+      assert.ok(html.includes('<meta property="og:image" content="'+url+'/card.svg">'));
+    }
     await api('/quiz/'+started.uuid+'/share','POST');
     const login = await api('/admin/login','POST',{password:process.env.ADMIN_PASSWORD});
     assert.match(login.cookie,/HttpOnly/); assert.match(login.cookie,/Secure/); assert.match(login.cookie,/SameSite=Strict/);
@@ -84,7 +97,14 @@ try {
     const stats = (await api('/admin/stats','GET',undefined,{Cookie:cookie})).data;
     assert.equal(stats.completed,1); assert.equal(stats.shared,1);
     await api('/admin/logout','POST',undefined,{Cookie:cookie});
-    console.log('Fluxo do container validado: quiz, resultado, Open Graph, compartilhamento e administração com cookie Secure.');
+    const secondHeaders = proxyHeaders(publicOrigins[1]);
+    const secondLogin = await api('/admin/login','POST',{password:process.env.ADMIN_PASSWORD},secondHeaders);
+    assert.match(secondLogin.cookie,/Secure/);
+    await api('/admin/stats','GET',undefined,{...secondHeaders,Cookie:secondLogin.cookie.split(';')[0]});
+    await api('/admin/logout','POST',undefined,{...secondHeaders,Cookie:secondLogin.cookie.split(';')[0]});
+    const blocked = await fetch(origin+'/api/quiz/start',{method:'POST',headers:{Origin:'https://evil.example'}});
+    assert.equal(blocked.status,403);
+    console.log('Fluxo do container validado em duas URLs: quiz, links, Open Graph, compartilhamento e administração com cookie Secure.');
   `;
   console.log(docker(['exec', '-i', app, 'node', '--input-type=module', '-'], { input: flow }));
   docker(['restart', app]);

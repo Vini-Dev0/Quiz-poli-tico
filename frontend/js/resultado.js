@@ -11,19 +11,24 @@ async function load() {
   try {
     result = await api(`/results/${uuid}`);
     publicUrl = document.querySelector('link[rel="canonical"]')?.href || `${location.origin}/resultado/${uuid}`;
-    shareText = `Descobri meu posicionamento político!\nResultado: ${result.politicalLabel}\nFaça o teste:`;
+    // Fallback mantém a apresentação compatível durante um deploy gradual.
+    const economic = result.economicView || { score: result.economicScore, label: result.economicLabel };
+    const authority = result.authorityView || { score: result.authorityScore, label: result.authorityLabel };
+    shareText = `Descobri meu posicionamento político!\nResultado: ${result.politicalLabel}\nVisão econômica: ${economic.label} (${signed(economic.score)})\nVisão de autoridade: ${authority.label} (${signed(authority.score)})\nFaça o teste:`;
     setText('political-label', result.politicalLabel);
-    setText('economic-score', signed(result.economicScore));
-    setText('authority-score', signed(result.authorityScore));
-    setText('economic-label', result.economicLabel);
-    setText('authority-label', result.authorityLabel);
-    setText('share-label', result.politicalLabel);
-    setText('share-economic', signed(result.economicScore));
-    setText('share-authority', signed(result.authorityScore));
-    for (const axis of ['economic', 'authority']) {
-      document.getElementById(`${axis}-marker`).style.left = `${(result[`${axis}Score`] + 100) / 2}%`;
-      document.getElementById(`${axis}-track`).setAttribute('aria-label', `${axis === 'economic' ? 'Economia' : 'Autoridade'}: ${signed(result[`${axis}Score`])}`);
+    for (const [axis, view] of [['economic', economic], ['authority', authority]]) {
+      setText(`${axis}-score`, signed(view.score));
+      setText(`${axis}-label`, view.label);
+      setText(`share-${axis}`, signed(view.score));
+      setText(`share-${axis}-label`, view.label);
+      setText(`map-${axis}-score`, signed(view.score));
+      setText(`map-${axis}-label`, view.label);
+      setText(`${axis}-reading`, `Nesta visão, seu resultado é ${view.label}, com pontuação ${signed(view.score)} na escala de −100 a +100.`);
+      document.getElementById(`${axis}-marker`).style.left = `${(view.score + 100) / 2}%`;
+      document.getElementById(`${axis}-track`).setAttribute('role', 'img');
+      document.getElementById(`${axis}-track`).setAttribute('aria-label', `${axis === 'economic' ? 'Economia' : 'Autoridade'}: ${view.label}, ${signed(view.score)} na escala de menos 100 a mais 100`);
     }
+    setText('share-label', result.politicalLabel);
     document.getElementById('result-compass').replaceChildren(compass(result.economicScore, result.authorityScore));
     document.getElementById('result-url').value = publicUrl;
     document.getElementById('download-card').href = `/resultado/${uuid}/card.svg`;

@@ -17,6 +17,8 @@ npm run dev
 
 O setup cria uma senha administrativa e um segredo JWT aleatórios, sem mostrar segredos no terminal. Para configuração manual, copie `.env.example` para `.env`. Consulte a senha em `.env` e acesse `/admin`. Reinicie o backend após alterar variáveis.
 
+`APP_URL` aceita uma ou mais origens separadas por vírgula, por exemplo `http://localhost:3000,http://example.example` em desenvolvimento. Os links públicos usam o domínio acessado se estiver na lista; o primeiro é a alternativa para acessos internos. Em produção, todas as origens devem usar HTTPS. Frontend e API são servidos juntos em cada domínio.
+
 Em produção: `npm ci --omit=dev`, `npx prisma migrate deploy` e `npm start`. O CLI Prisma é dependência de produção para permitir a migration durante a inicialização do Docker.
 
 ## Verificação

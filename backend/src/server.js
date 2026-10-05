@@ -5,7 +5,7 @@ import { startAbandonmentJob, sweepAbandoned } from './services/abandonment.js';
 await prisma.$connect();
 await sweepAbandoned();
 const job = startAbandonmentJob();
-const server = app.listen(config.port, '0.0.0.0', () => console.log(`Prisma disponível em ${config.appUrl}`));
+const server = app.listen(config.port, '0.0.0.0', () => console.log(`Prisma disponível em ${config.appUrls.join(', ')}`));
 let closing = false;
 async function shutdown() {
   if (closing) return;

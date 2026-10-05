@@ -56,7 +56,7 @@ Há uma cópia em [easypanel.env.example](easypanel.env.example). Os valores `re
 | --- | --- |
 | `NODE_ENV` | `production`, para ativar cookies Secure e proteções de produção |
 | `PORT` | `3000`, a mesma porta de destino do domínio |
-| `APP_URL` | URL pública real com HTTPS, por exemplo `https://quiz.seudominio.com`; sem `/admin`, `/api` ou outro caminho |
+| `APP_URL` | Uma ou mais origens HTTPS separadas por vírgula, por exemplo `https://quiz.seudominio.com,https://teste.seudominio.com`; sem `/admin`, `/api` ou outro caminho |
 | `DATABASE_URL` | URL interna copiada do Postgres em Credentials |
 | `ADMIN_PASSWORD` | Senha administrativa forte com pelo menos 12 caracteres |
 | `JWT_SECRET` | Segredo aleatório com pelo menos 32 caracteres, diferente da senha administrativa |
@@ -91,7 +91,15 @@ Em **Domains**, configure:
 | Porta de destino / Target port | `3000` |
 | HTTPS público | Habilitado, com certificado válido |
 
-Aponte o DNS do domínio para a VPS, marque esse domínio como principal e coloque sua origem HTTPS em `APP_URL`. O proxy termina o HTTPS e encaminha HTTP para a aplicação em `0.0.0.0:3000`. O HTTPS público é necessário para o cookie administrativo Secure. Mantenha a porta HTTP acessível por **Domains**; não é necessário publicar a porta 3000 como porta TCP externa em Advanced → Ports.
+Aponte o DNS do domínio para a VPS, marque esse domínio como principal e coloque sua origem HTTPS em `APP_URL`. Para dois domínios, adicione uma entrada em **Domains** para cada hostname, ambas com caminho `/`, protocolo interno HTTP, porta 3000 e HTTPS público habilitado. Use a lista em **Environment**, por exemplo:
+
+```dotenv
+APP_URL=https://quiz.seudominio.com,https://teste.seudominio.com
+```
+
+Os links de resultado e as metatags preservam o domínio acessado. A primeira URL é usada como alternativa para solicitações internas ou hosts não cadastrados. Uma única origem continua sendo aceita. Cada domínio mantém seu próprio cookie administrativo e progresso no navegador; o banco e as métricas são compartilhados.
+
+O proxy termina o HTTPS e encaminha HTTP para a aplicação em `0.0.0.0:3000`. O HTTPS público é necessário para o cookie administrativo Secure, e todas as URLs da lista devem usar HTTPS quando `NODE_ENV=production`. O exemplo `http://localhost:3000,http://example.example` é aceito em desenvolvimento. Mantenha a porta HTTP acessível por **Domains**; não é necessário publicar a porta 3000 como porta TCP externa em Advanced → Ports.
 
 ## 5. Fazer o deploy
 
@@ -132,8 +140,8 @@ O frontend usa URLs relativas para a API e o backend entrega os metadados das p�
 | Migration falhou | Leia os logs; corrija a migration/permite acesso ao banco antes de reiniciar; não use reset no banco de produção |
 | Domínio retorna 502 ou healthcheck falha | Confira logs, porta 3000, processo iniciado e resultado de `/health` |
 | Login administrativo não mantém sessão | Use o domínio HTTPS com certificado válido e confirme `NODE_ENV=production` |
-| Resposta “Origem não autorizada” | A origem acessada precisa corresponder exatamente a `APP_URL` |
-| Resultados apontam para localhost | Corrija `APP_URL` para o domínio público e faça Deploy |
+| Resposta “Origem não autorizada” | A origem acessada precisa corresponder a uma das URLs de `APP_URL`, incluindo protocolo e porta |
+| Resultados apontam para a primeira URL | Confira se a origem acessada está na lista e se o proxy encaminha o host e o protocolo corretos; ajuste `APP_URL` e faça Deploy |
 
 ## Verificação local da imagem
 

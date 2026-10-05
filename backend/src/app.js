@@ -10,6 +10,7 @@ import { prisma } from './services/database.js';
 import { getResult } from './services/quiz.js';
 import { validateUuid } from './utils/validation.js';
 import { escapeHtml } from './utils/html.js';
+import { getAppUrl } from './utils/app-url.js';
 
 const frontend = fileURLToPath(new URL('../../frontend/', import.meta.url));
 export const app = express();
@@ -34,17 +35,20 @@ app.get('/admin', (req, res, next) => requireAdmin(req, res, error => {
 }));
 app.get('/resultado/:uuid', async (req, res) => {
   const result = await getResult(validateUuid(req.params.uuid));
-  const url = `${config.appUrl}/resultado/${result.uuid}`;
+  const appUrl = getAppUrl(req);
+  const url = `${appUrl}/resultado/${result.uuid}`;
   const title = `Meu resultado: ${result.politicalLabel} | Prisma`;
-  const description = `Economia: ${result.economicScore > 0 ? '+' : ''}${result.economicScore}. Autoridade: ${result.authorityScore > 0 ? '+' : ''}${result.authorityScore}. Descubra seu posicionamento em dois eixos independentes.`;
-  const metadata = `<title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${escapeHtml(url)}"><meta property="og:image" content="${escapeHtml(config.appUrl)}/resultado/${result.uuid}/card.svg"><meta name="twitter:card" content="summary"><link rel="canonical" href="${escapeHtml(url)}">`;
+  const description = `Visão econômica: ${result.economicView.label} (${result.economicScore > 0 ? '+' : ''}${result.economicScore}). Visão de autoridade: ${result.authorityView.label} (${result.authorityScore > 0 ? '+' : ''}${result.authorityScore}). Duas dimensões do mesmo resultado.`;
+  const metadata = `<title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${escapeHtml(url)}"><meta property="og:image" content="${escapeHtml(appUrl)}/resultado/${result.uuid}/card.svg"><meta name="twitter:card" content="summary"><link rel="canonical" href="${escapeHtml(url)}">`;
   const html = await readFile(`${frontend}/resultado.html`, 'utf8');
-  res.send(html.replace('<!--RESULT_META-->', metadata).replace('<!--RESULT_FALLBACK-->', `<noscript><h1>${escapeHtml(result.politicalLabel)}</h1><p>${escapeHtml(description)}</p><p>Ative JavaScript para ver o gráfico e compartilhar.</p></noscript>`));
+  res.send(html.replace('<!--RESULT_META-->', metadata).replace('<!--RESULT_FALLBACK-->', `<noscript><h1>${escapeHtml(result.politicalLabel)}</h1><h2>Visão econômica</h2><dl><dt>Pontuação econômica</dt><dd>${result.economicScore}</dd><dt>Classificação econômica</dt><dd>${escapeHtml(result.economicLabel)}</dd></dl><h2>Visão de autoridade</h2><dl><dt>Pontuação de autoridade</dt><dd>${result.authorityScore}</dd><dt>Classificação de autoridade</dt><dd>${escapeHtml(result.authorityLabel)}</dd></dl><p>Ative JavaScript para ver o gráfico e compartilhar.</p></noscript>`));
 });
 app.get('/resultado/:uuid/card.svg', async (req, res) => {
   const result = await getResult(validateUuid(req.params.uuid));
   const label = escapeHtml(result.politicalLabel);
-  res.type('image/svg+xml').send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><defs><radialGradient id="g"><stop stop-color="#423375"/><stop offset="1" stop-color="#101018"/></radialGradient></defs><rect width="1200" height="630" fill="url(#g)"/><rect x="65" y="65" width="1070" height="500" rx="28" fill="#15151f" stroke="#55506b"/><g font-family="system-ui,sans-serif" fill="#f5f2ff"><text x="110" y="155" font-size="30" fill="#b8a5f2">PRISMA / SEU RESULTADO</text><text x="110" y="295" font-size="64" font-weight="700">${label}</text><text x="110" y="380" font-size="30">Economia: ${result.economicScore} · Autoridade: ${result.authorityScore}</text><text x="110" y="490" font-size="26" fill="#b8b6c6">40 perguntas. Dois eixos. Uma nova perspectiva.</text></g></svg>`);
+  const economicScore = `${result.economicScore > 0 ? '+' : ''}${result.economicScore}`;
+  const authorityScore = `${result.authorityScore > 0 ? '+' : ''}${result.authorityScore}`;
+  res.type('image/svg+xml').send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><defs><radialGradient id="g"><stop stop-color="#423375"/><stop offset="1" stop-color="#101018"/></radialGradient></defs><rect width="1200" height="630" fill="url(#g)"/><rect x="65" y="65" width="1070" height="500" rx="28" fill="#15151f" stroke="#55506b"/><rect x="105" y="285" width="480" height="190" rx="16" fill="#211c2c" stroke="#40364f"/><rect x="615" y="285" width="480" height="190" rx="16" fill="#211c2c" stroke="#40364f"/><g font-family="system-ui,sans-serif" fill="#f5f2ff"><text x="110" y="145" font-size="27" fill="#b8a5f2">PRISMA / SEU RESULTADO</text><text x="110" y="235" font-size="60" font-weight="700">${label}</text><text x="130" y="325" font-size="19" fill="#b8a5f2">VISÃO ECONÔMICA</text><text x="130" y="378" font-size="30">${escapeHtml(result.economicLabel)}</text><text x="130" y="441" font-size="44" fill="#d5bcfb">${economicScore}</text><text x="640" y="325" font-size="19" fill="#b8a5f2">VISÃO DE AUTORIDADE</text><text x="640" y="378" font-size="30">${escapeHtml(result.authorityLabel)}</text><text x="640" y="441" font-size="44" fill="#d5bcfb">${authorityScore}</text><text x="110" y="530" font-size="23" fill="#b8b6c6">40 perguntas. Dois eixos. Uma nova perspectiva.</text></g></svg>`);
 });
 app.use((req, res) => res.status(404).format({ json: () => res.json({ error: 'Página não encontrada.' }), html: () => res.type('html').send('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Página não encontrada</title><body><h1>Página não encontrada</h1><a href="/">Voltar ao Prisma</a></body></html>'), default: () => res.send('Não encontrado.') }));
 app.use((error, req, res, next) => {

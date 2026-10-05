@@ -6,7 +6,7 @@ import { HttpError } from '../utils/errors.js';
 export function sameOrigin(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   const origin = req.get('origin');
-  if ((origin && origin !== config.appUrl) || req.get('sec-fetch-site') === 'cross-site') return next(new HttpError(403, 'Origem não autorizada.'));
+  if ((origin && !config.appUrls.includes(origin)) || req.get('sec-fetch-site') === 'cross-site') return next(new HttpError(403, 'Origem não autorizada.'));
   next();
 }
 export async function requireAdmin(req, res, next) {

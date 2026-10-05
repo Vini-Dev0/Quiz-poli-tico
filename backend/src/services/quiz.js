@@ -1,9 +1,9 @@
 import { randomUUID, randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { prisma } from './database.js';
-import { config } from '../config.js';
 import { QUIZ_VERSION } from '../data/questions.js';
 import { calculateResult } from '../utils/scoring.js';
 import { HttpError } from '../utils/errors.js';
+import { presentResult } from '../utils/result-view.js';
 
 export const publicSelect = { uuid: true, economicScore: true, authorityScore: true, economicLabel: true, authorityLabel: true, politicalLabel: true, completedAt: true };
 const hashToken = token => createHash('sha256').update(token).digest('hex');
@@ -21,7 +21,7 @@ export function authorizeSession(session, token) {
 export async function resumeQuiz(uuid, token) {
   const session = await prisma.quizSession.findUnique({ where: { uuid } });
   authorizeSession(session, token);
-  if (session.status === 'COMPLETED') return { uuid, status: session.status, resultUrl: `${config.appUrl}/resultado/${uuid}` };
+  if (session.status === 'COMPLETED') return { uuid, status: session.status };
   return { uuid, status: session.status, currentQuestion: session.currentQuestion, answers: session.answers, quizVersion: session.quizVersion };
 }
 // Lock de linha: evita que progressos simultâneos sobrescrevam a conclusão
@@ -51,7 +51,7 @@ export function completeQuiz(uuid, token, answers) {
 export async function getResult(uuid) {
   const result = await prisma.quizSession.findFirst({ where: { uuid, status: 'COMPLETED' }, select: publicSelect });
   if (!result) throw new HttpError(404, 'Resultado não encontrado ou quiz ainda não concluído.');
-  return result;
+  return presentResult(result);
 }
 export async function shareResult(uuid) {
   const result = await prisma.quizSession.updateMany({ where: { uuid, status: 'COMPLETED', shared: false }, data: { shared: true, sharedAt: new Date() } });

@@ -47,11 +47,21 @@ Alternativa ao setup: copie `backend/.env.example` para `backend/.env` e preench
 | `DATABASE_URL` | Conexão PostgreSQL; no Compose o hostname é `postgres` |
 | `ADMIN_PASSWORD` | Senha administrativa com pelo menos 12 caracteres |
 | `JWT_SECRET` | Segredo aleatório com pelo menos 32 caracteres |
-| `APP_URL` | Origem pública sem subdiretório, usada nas URLs, Open Graph e proteção de origem |
+| `APP_URL` | Uma ou mais origens públicas separadas por vírgula, sem subdiretório; usadas nas URLs, Open Graph e proteção de origem |
 | `PORT` | Porta do Express; padrão 3000 |
-| `NODE_ENV` | `development` local; `production` exige HTTPS em `APP_URL` e cookie Secure |
+| `NODE_ENV` | `development` local; `production` exige HTTPS em todas as URLs de `APP_URL` e cookie Secure |
 | `ABANDONMENT_MINUTES` | Minutos de inatividade; padrão 30 |
 | `TRUST_PROXY` | `1` somente com exatamente um proxy confiável; caso contrário `0` |
+
+Para acessar a mesma aplicação por duas URLs em desenvolvimento:
+
+```dotenv
+APP_URL=http://localhost:3000,http://example.example
+```
+
+Cada domínio precisa apontar para o mesmo backend. A lista aceita espaços entre as URLs e barras finais, que são normalizados; caminhos, parâmetros, credenciais e entradas vazias são recusados. Uma única URL continua válida. Links de conclusão, retomada, compartilhamento, canonical e Open Graph usam a origem acessada quando ela está na lista. A primeira URL é a alternativa para acessos por endereços internos ou hosts não cadastrados. Não use a lista inteira como um link.
+
+Em produção, use somente origens HTTPS, por exemplo `APP_URL=https://quiz.seudominio.com,https://teste.seudominio.com`. Cadastre ambos os domínios no proxy/EasyPanel, encaminhando ao mesmo serviço e porta. O frontend e a API continuam na mesma origem em cada domínio; não é necessário CORS. Cookies administrativos e o progresso no navegador pertencem a cada origem, enquanto os resultados e métricas continuam no mesmo banco. Não há sincronização automática de login ou de sessão do quiz entre domínios. Reinicie o backend ou faça Deploy depois de alterar a lista.
 
 `.env` e `node_modules` são ignorados pelo Git e pelo build Docker. O `.env` gerado tem permissão 0600. Para gerar um segredo manualmente:
 
@@ -137,6 +147,10 @@ O scatter desenha resultados reais em Canvas. Carrega no máximo 1.000 pontos po
 
 ## Compartilhamento e Open Graph
 
+A API pública e a conclusão do quiz também retornam `economicView: { score, label }` e `authorityView: { score, label }`. São projeções de `economicScore`/`economicLabel` e `authorityScore`/`authorityLabel`, mantendo os campos anteriores para compatibilidade. Não há novo cálculo, dados coletados ou colunas no banco.
+
+A página pública mostra dois cards, **Visão econômica** e **Visão de autoridade**, cada um com sua pontuação, classificação, escala e leitura textual dos mesmos valores. O mapa, o card baixável e o texto de compartilhamento usam esses campos. Resultados antigos recebem a apresentação nova ao serem consultados, sem recalcular as classificações salvas e sem precisar de uma migration.
+
 Web Share API, WhatsApp, Facebook, X/Twitter, Telegram e copiar link funcionam sem autenticar em APIs de redes sociais. Instagram copia resultado e link e abre o site para o usuário colar manualmente. A URL fica disponível para copiar manualmente caso o navegador bloqueie Clipboard ou novas janelas.
 
 **`shared` mede intenção: clique num botão, não confirmação de publicação externa.** Os navegadores não oferecem confirmação uniforme de postagem. Cancelar a folha nativa de compartilhamento ainda conta como clique. Quem visitar um resultado público também pode compartilhá-lo; o flag pertence ao resultado. Cliques repetidos preservam a primeira data `sharedAt` e nunca criam registros extras.
@@ -185,7 +199,7 @@ O navegador testa o quiz completo, retomada, resultado público, compartilhament
 3. Gere o client (`npm ci`, que executa `prisma generate`) e aplique `npx prisma migrate deploy`, não `migrate dev`. A migration inicial está versionada.
 4. Inicie com `npm start`, ou construa a imagem na raiz: `docker build -t prisma-quiz .`. A imagem tem `NODE_ENV=production`, usuário sem privilégios, healthcheck e Tini; valida as variáveis e aplica as migrations antes de iniciar o Node. Para EasyPanel, cadastre os valores em App → Environment conforme [o guia](deploy/EASYPANEL.md).
 5. Coloque Express atrás de um proxy que termine HTTPS e encaminhe o host e protocolo corretamente. Use `TRUST_PROXY=1` apenas se houver exatamente um proxy confiável. Proteja o acesso direto ao backend.
-6. Sirva todas as rotas pela mesma origem; o Express já entrega os três frontends e o SSR do resultado. Não publique `/admin.html` por um servidor estático separado.
+6. Em cada domínio listado em `APP_URL`, sirva frontend e API juntos pelo Express, que também entrega o SSR do resultado. Não publique `/admin.html` por um servidor estático separado.
 7. Valide `/health`, login, cookie Secure, URLs compartilhadas e o fluxo completo no domínio de produção.
 
 Para Compose em produção, exporte `POSTGRES_PASSWORD` forte, use a mesma configuração em `backend/.env` e ajuste `NODE_ENV`, `APP_URL`, `TRUST_PROXY`. Não exponha a porta PostgreSQL fora de localhost; se não precisar de acesso local, remova seu mapeamento de portas. O job de abandono roda em cada processo e sua atualização condicional é segura; para muitas réplicas, o rate limit deve migrar para um store compartilhado, pois a implementação atual é por processo.

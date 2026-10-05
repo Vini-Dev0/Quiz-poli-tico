@@ -8,7 +8,8 @@ import request from 'supertest';
 if (!process.env.TEST_DATABASE_URL || !/[?&]schema=quiz_test(?:&|$)/.test(process.env.TEST_DATABASE_URL)) throw new Error('Defina TEST_DATABASE_URL apontando para schema=quiz_test e execute as migrations nele.');
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.NODE_ENV = 'test';
-process.env.APP_URL = 'http://localhost:3000';
+process.env.APP_URL = 'http://localhost:3000,http://example.example,https://example.example';
+process.env.TRUST_PROXY = '0';
 process.env.ADMIN_PASSWORD = 'integration-test-password';
 process.env.JWT_SECRET = 'integration-test-secret-at-least-32-characters';
 const { app } = await import('../src/app.js');
@@ -74,6 +75,8 @@ test('conclusão valida 40 respostas, calcula no servidor, é imutável e idempo
   assert.equal(res.body.economicScore, 100);
   assert.equal(res.body.authorityScore, -100);
   assert.equal(res.body.politicalLabel, 'Direita Libertária');
+  assert.deepEqual(res.body.economicView, { score: res.body.economicScore, label: res.body.economicLabel });
+  assert.deepEqual(res.body.authorityView, { score: res.body.authorityScore, label: res.body.authorityLabel });
   const again = await client.post(`/api/quiz/${s.uuid}/complete`).set('X-Quiz-Token', s.token).send({ answers: Object.fromEntries(questions.map(q => [q.id, 3])) }).expect(200);
   assert.equal(again.body.economicScore, 100);
   await client.patch(`/api/quiz/${s.uuid}/progress`).set('X-Quiz-Token', s.token).send({ currentQuestion: 40, answers }).expect(409);
@@ -85,11 +88,17 @@ test('resultado público contém apenas resultado e SSR entrega Open Graph perso
   const s = sessions[1];
   const res = await client.get(`/api/results/${s.uuid}`).expect(200);
   for (const key of ['id', 'answers', 'editTokenHash', 'lastActivityAt', 'shared']) assert.equal(res.body[key], undefined);
+  assert.deepEqual(res.body.economicView, { score: res.body.economicScore, label: res.body.economicLabel });
+  assert.deepEqual(res.body.authorityView, { score: res.body.authorityScore, label: res.body.authorityLabel });
   const html = await client.get(`/resultado/${s.uuid}`).expect(200);
   assert.match(html.text, /og:title" content="Meu resultado: Direita Libertária/);
   assert.match(html.text, /og:url/);
   assert.doesNotMatch(html.text, /<!--RESULT_META-->/);
-  await client.get(`/resultado/${s.uuid}/card.svg`).expect(200).expect('Content-Type', /image\/svg\+xml/);
+  const card = await client.get(`/resultado/${s.uuid}/card.svg`).expect(200).expect('Content-Type', /image\/svg\+xml/);
+  const cardText = card.text || card.body.toString('utf8');
+  assert.match(cardText, /VISÃO ECONÔMICA/);
+  assert.match(cardText, /VISÃO DE AUTORIDADE/);
+  assert.match(cardText, /Libertário radical/);
   await client.get(`/api/results/${randomUUID()}`).expect(404);
 });
 test('compartilhamento idempotente e proibido antes de concluir', async () => {
@@ -146,4 +155,63 @@ test('logout revoga sessão no banco e token anterior não pode ser reutilizado'
   await client.get('/api/admin/stats').set('Cookie', cookie).expect(401);
   await admin.post('/api/admin/logout').expect(200);
   await admin.get('/api/admin/stats').expect(401);
+});
+test('ambas as origens suportam quiz, links, compartilhamento e login administrativo', async () => {
+  for (const origin of ['http://localhost:3000', 'http://example.example']) {
+    const headers = { Host: new URL(origin).host, Origin: origin, 'Sec-Fetch-Site': 'same-origin' };
+    const started = await client.post('/api/quiz/start').set(headers).expect(201);
+    const { uuid, token } = started.body;
+    await client.patch(`/api/quiz/${uuid}/progress`).set(headers).set('X-Quiz-Token', token).send({ currentQuestion: 1, answers: { 1: 3 } }).expect(200);
+    const completed = await client.post(`/api/quiz/${uuid}/complete`).set(headers).set('X-Quiz-Token', token).send({ answers }).expect(200);
+    const url = `${origin}/resultado/${uuid}`;
+    assert.equal(completed.body.resultUrl, url);
+    const resumed = await client.get(`/api/quiz/${uuid}`).set(headers).set('X-Quiz-Token', token).expect(200);
+    assert.equal(resumed.body.resultUrl, url);
+    const html = await client.get(`/resultado/${uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${url}">`));
+    assert.ok(html.text.includes(`<meta property="og:url" content="${url}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${url}/card.svg">`));
+    await client.post(`/api/quiz/${uuid}/share`).set(headers).expect(200);
+    const login = await client.post('/api/admin/login').set(headers).send({ password: process.env.ADMIN_PASSWORD }).expect(200);
+    assert.doesNotMatch(login.headers['set-cookie'][0], /Domain=/i);
+    const cookie = login.headers['set-cookie'][0].split(';')[0];
+    await client.get('/api/admin/stats').set(headers).set('Cookie', cookie).expect(200);
+    await client.post('/api/admin/logout').set(headers).set('Cookie', cookie).expect(200);
+  }
+});
+test('domínios externos continuam bloqueados e hosts desconhecidos não contaminam links', async () => {
+  for (const origin of ['http://evil.example', 'http://example.example.evil.example', 'null']) {
+    await client.post('/api/quiz/start').set('Origin', origin).expect(403);
+  }
+  await client.post('/api/quiz/start').set('Origin', 'http://example.example').set('Sec-Fetch-Site', 'cross-site').expect(403);
+  const s = sessions[1];
+  const fallbackUrl = `http://localhost:3000/resultado/${s.uuid}`;
+  for (const headers of [
+    { Host: 'evil.example' },
+    { Host: 'evil.example', 'X-Forwarded-Host': 'example.example', 'X-Forwarded-Proto': 'https' }
+  ]) {
+    const resumed = await client.get(`/api/quiz/${s.uuid}`).set(headers).set('X-Quiz-Token', s.token).expect(200);
+    assert.equal(resumed.body.resultUrl, fallbackUrl);
+    const html = await client.get(`/resultado/${s.uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${fallbackUrl}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${fallbackUrl}/card.svg">`));
+    assert.doesNotMatch(html.text, /evil\.example/);
+  }
+});
+test('proxy confiável mantém HTTPS e domínio público nos links e metadados', async () => {
+  app.set('trust proxy', 1);
+  try {
+    const s = sessions[1];
+    const headers = { Host: 'internal-app:3000', 'X-Forwarded-Host': 'example.example', 'X-Forwarded-Proto': 'https', Origin: 'https://example.example' };
+    const url = `https://example.example/resultado/${s.uuid}`;
+    const completed = await client.post(`/api/quiz/${s.uuid}/complete`).set(headers).set('X-Quiz-Token', s.token).send({ answers }).expect(200);
+    assert.equal(completed.body.resultUrl, url);
+    const html = await client.get(`/resultado/${s.uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${url}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${url}/card.svg">`));
+    const unknown = await client.get(`/api/quiz/${s.uuid}`).set({ ...headers, 'X-Forwarded-Host': 'evil.example' }).set('X-Quiz-Token', s.token).expect(200);
+    assert.equal(unknown.body.resultUrl, `http://localhost:3000/resultado/${s.uuid}`);
+  } finally {
+    app.set('trust proxy', false);
+  }
 });

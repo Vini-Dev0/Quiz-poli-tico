@@ -12,7 +12,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "test": "node --test tests/scoring.test.js tests/validation.test.js tests/config.test.js",
+    "test": "node --test tests/scoring.test.js tests/validation.test.js tests/config.test.js tests/result-view.test.js tests/app-url.test.js",
     "test:integration": "node --test --test-concurrency=1 tests/integration.test.js",
     "test:e2e": "playwright test",
     "test:docker": "node tests/deployment-smoke.js"

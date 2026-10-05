@@ -34,6 +34,13 @@ test('quiz completo, retomada, resultado público, compartilhamento e dashboard 
   await expect(page.locator('#political-label')).toHaveText('Centro');
   await expect(page.locator('#economic-score')).toHaveText('-5');
   await expect(page.locator('#authority-score')).toHaveText('0');
+  await expect(page.getByRole('heading', { name: 'Visão econômica', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visão de autoridade', exact: true })).toBeVisible();
+  await expect(page.locator('#economic-label')).toHaveText('Centro');
+  await expect(page.locator('#authority-label')).toHaveText('Centro');
+  await expect(page.locator('#economic-reading')).toContainText('-5');
+  await expect(page.locator('#map-economic-score')).toHaveText('-5');
+  await expect(page.locator('#share-authority-label')).toHaveText('Centro');
   await page.screenshot({ path: '../test-results/result-desktop.png', fullPage: true });
   const resultUrl = page.url();
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -81,6 +88,8 @@ test('mobile sem overflow, quiz acessível e resultado responsivo', async ({ pag
   await page.screenshot({ path: '../test-results/quiz-mobile.png', fullPage: true });
   await page.goto(`/resultado/${mobileSession.uuid}`);
   await expect(page.locator('#political-label')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visão econômica', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visão de autoridade', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '../test-results/result-mobile.png', fullPage: true });
   await page.goto('/admin/login');
@@ -109,4 +118,40 @@ test('falha ao salvar mantém resposta e permite reenviar sem avançar', async (
   await expect(page.locator('#landing')).toBeVisible();
   await page.locator('[data-start]').last().click();
   await expect(page.locator('#question-kicker')).toHaveText('PERGUNTA 02');
+});
+
+test('duas URLs reais preservam links e permitem quiz, compartilhamento e administração', async ({ page, context }) => {
+  for (const origin of ['http://localhost:3001', 'http://127.0.0.1:3001']) {
+    await page.goto(origin);
+    const startedResponse = page.waitForResponse(response => response.url() === `${origin}/api/quiz/start` && response.status() === 201);
+    await page.getByRole('button', { name: 'Descobrir meu posicionamento' }).click();
+    const { uuid, token } = await (await startedResponse).json();
+    await expect(page.locator('#question-kicker')).toHaveText('PERGUNTA 01');
+    await page.locator('.answer-option').nth(2).click();
+    await expect(page.locator('#next-question')).toBeEnabled();
+    const completed = await page.request.post(`${origin}/api/quiz/${uuid}/complete`, {
+      headers: { Origin: origin, 'X-Quiz-Token': token },
+      data: { answers: Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, 3])) }
+    });
+    expect(completed.ok()).toBe(true);
+    const url = `${origin}/resultado/${uuid}`;
+    expect((await completed.json()).resultUrl).toBe(url);
+    await page.goto(url);
+    await expect(page.locator('#result-url')).toHaveValue(url);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', url);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', url);
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
+    await page.getByRole('button', { name: 'Copiar link', exact: true }).last().click();
+    await expect(page.locator('.toast')).toContainText('Link copiado');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(url);
+    await expect.poll(async () => (await db.quizSession.findUnique({ where: { uuid } })).shared).toBe(true);
+    await page.goto(`${origin}/admin`);
+    await expect(page).toHaveURL(`${origin}/admin/login`);
+    await page.locator('#admin-password').fill('browser-test-password');
+    await page.locator('#login-button').click();
+    await expect(page).toHaveURL(`${origin}/admin`);
+    await expect(page.locator('#metric-completed')).not.toHaveText('—');
+    await page.locator('#logout').click();
+    await expect(page).toHaveURL(`${origin}/admin/login`);
+  }
 });

@@ -15,6 +15,6 @@ export default defineConfig({
     url: 'http://localhost:3001/health',
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { ...process.env, PORT: '3001', APP_URL: 'http://localhost:3001', DATABASE_URL: process.env.TEST_DATABASE_URL, NODE_ENV: 'test', ADMIN_PASSWORD: 'browser-test-password', JWT_SECRET: 'browser-test-jwt-secret-at-least-32-characters', TRUST_PROXY: '0' }
+    env: { ...process.env, PORT: '3001', APP_URL: 'http://localhost:3001,http://127.0.0.1:3001', DATABASE_URL: process.env.TEST_DATABASE_URL, NODE_ENV: 'test', ADMIN_PASSWORD: 'browser-test-password', JWT_SECRET: 'browser-test-jwt-secret-at-least-32-characters', TRUST_PROXY: '0' }
   }
 });
