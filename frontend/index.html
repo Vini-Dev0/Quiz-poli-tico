@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101016">
+  <meta name="description" content="Entenda suas ideias em dois eixos independentes. Um quiz político anônimo com 40 perguntas sobre economia, liberdade e autoridade.">
+  <title>Prisma — suas ideias em perspectiva</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <header class="site-header wrap">
+    <a class="brand" href="/" aria-label="Prisma — início"><img src="/assets/mark.svg" width="38" height="38" alt=""><span>prisma<span class="brand-sub">IDEIAS EM PERSPECTIVA</span></span></a>
+    <nav aria-label="Navegação principal"><a href="#como-funciona">Como funciona</a><a href="#metodologia">Metodologia</a><a href="#privacidade">Privacidade</a></nav>
+    <button class="button button-small button-outline" data-start>Começar quiz <span aria-hidden="true">↗</span></button>
+  </header>
+  <main id="main">
+    <div id="landing">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow-pill"><span class="live-dot"></span> MENOS RÓTULOS. MAIS PERSPECTIVA.</div>
+          <h1 id="hero-title">Suas ideias têm<br>um lugar <span class="gradient-text">no mapa.</span></h1>
+          <p class="hero-description">Vá além de esquerda e direita. Descubra como você pensa sobre economia, liberdade e o papel do Estado.</p>
+          <div class="hero-actions"><button class="button button-primary" data-start>Descobrir meu posicionamento <span aria-hidden="true">↗</span></button><a class="text-link" href="#como-funciona">Conheça o teste <span aria-hidden="true">↓</span></a></div>
+          <p id="resume-note" class="resume-note" hidden>Você tem um quiz em andamento. Continue de onde parou.</p>
+          <div class="hero-facts"><span><b>40</b> perguntas</span><span><b>~6</b> minutos</span><span><b>2</b> eixos independentes</span></div>
+        </div>
+        <div class="map-card" aria-label="Mapa ilustrativo dos dois eixos políticos; não representa um resultado real">
+          <div class="map-card-top"><span class="micro-label">SEU PONTO DE VISTA, EM PERSPECTIVA</span><span class="small-cross" aria-hidden="true">✦</span></div>
+          <div class="hero-map">
+            <span class="map-label map-north">AUTORITÁRIO</span><span class="map-label map-south">LIBERTÁRIO</span><span class="map-label map-west">ESQUERDA</span><span class="map-label map-east">DIREITA</span>
+            <svg viewBox="0 0 400 360" role="img" aria-label="Eixo econômico horizontal e eixo de autoridade vertical">
+              <defs><pattern id="grid" width="40" height="36" patternUnits="userSpaceOnUse"><path d="M40 0H0V36" fill="none" stroke="#ffffff" stroke-opacity=".055"/></pattern><radialGradient id="mapGlow"><stop stop-color="#b89aef" stop-opacity=".16"/><stop offset="1" stop-color="#b89aef" stop-opacity="0"/></radialGradient></defs>
+              <rect x="0" y="0" width="400" height="360" rx="10" fill="url(#grid)"/><circle cx="270" cy="248" r="110" fill="url(#mapGlow)"/>
+              <path d="M0 180H400M200 0V360" stroke="#c4bcd8" stroke-opacity=".4"/><path d="m395 176 5 4-5 4M196 5l4-5 4 5" stroke="#c4bcd8" stroke-opacity=".6" fill="none"/>
+              <text x="205" y="194" fill="#73707f" font-size="10">0</text>
+              <path d="M270 180V248H200" stroke="#c6a5ff" stroke-opacity=".4" stroke-dasharray="4 5" fill="none"/><circle cx="270" cy="248" r="23" fill="#b89aef" fill-opacity=".07" stroke="#b89aef" stroke-opacity=".16"/><circle cx="270" cy="248" r="11" fill="#b89aef" fill-opacity=".15"/><circle cx="270" cy="248" r="5" fill="#d1b7ff"/>
+              <text x="287" y="253" fill="#e0d0fa" font-size="11">Suas ideias</text>
+              <text x="18" y="28" fill="#77717f" font-size="10">ECONOMIA + AUTORIDADE</text>
+            </svg>
+          </div>
+          <div class="map-card-bottom"><span class="legend-dot"></span> Um mapa, muitas formas de pensar <span class="illustration-tag">ILUSTRATIVO</span></div>
+        </div>
+      </section>
+      <div class="trust-bar wrap"><span><span class="trust-icon" aria-hidden="true">⌁</span> Sem cadastro</span><span><span class="trust-icon" aria-hidden="true">◈</span> Participação anônima</span><span><span class="trust-icon" aria-hidden="true">◎</span> Dois eixos independentes</span><span><span class="trust-icon" aria-hidden="true">↗</span> Resultado compartilhável</span></div>
+      <section class="how-section wrap" id="como-funciona" aria-labelledby="how-title">
+        <div class="section-heading"><div><p class="micro-label accent">SIMPLES DE RESPONDER. INTERESSANTE DE DESCOBRIR.</p><h2 id="how-title">Uma nova forma de olhar para suas ideias.</h2></div><span class="section-aside">Seu ponto de vista é o ponto de partida.</span></div>
+        <div class="feature-grid">
+          <article class="feature-card"><div class="feature-top"><span class="feature-icon" aria-hidden="true">≋</span><span>01</span></div><h3>Responda com liberdade</h3><p>40 afirmações, uma por vez. Escolha o quanto concorda. Sem respostas certas ou erradas.</p></article>
+          <article class="feature-card"><div class="feature-top"><span class="feature-icon" aria-hidden="true">⌖</span><span>02</span></div><h3>Encontre sua perspectiva</h3><p>Veja seu resultado em economia e autoridade. Cada eixo conta uma parte da sua história.</p></article>
+          <article class="feature-card"><div class="feature-top"><span class="feature-icon" aria-hidden="true">↗</span><span>03</span></div><h3>Abra a conversa</h3><p>Compartilhe seu mapa com um link e descubra o que aproxima — ou diferencia — suas ideias.</p></article>
+        </div>
+      </section>
+      <section class="method-section wrap" id="metodologia"><div><p class="micro-label accent">ALÉM DE UMA ÚNICA LINHA</p><h2>Duas dimensões.<br>Mais espaço para você.</h2><p>Esquerda e direita descrevem o eixo econômico. Liberdade e autoridade descrevem o eixo social. Um não determina o outro.</p></div><div class="method-details"><article><span class="axis-icon">↔</span><div><h3>Economia</h3><p>O papel do Estado, do mercado e da distribuição de recursos. De −100 (esquerda) a +100 (direita).</p></div></article><article><span class="axis-icon">↕</span><div><h3>Autoridade</h3><p>Autonomia individual, instituições e limites do poder. De −100 (libertário) a +100 (autoritário).</p></div></article><details><summary>Como o resultado é calculado?</summary><p>As respostas de 1 a 5 são convertidas em valores de −2 a +2. Cada afirmação contribui apenas para seu eixo, conforme sua direção. A soma é normalizada para −100 a +100. A faixa de −10 a +10 é o centro.</p><p>Este é um instrumento exploratório com afirmações propostas para o projeto, sem validação psicométrica. Seu resultado é uma estimativa das respostas, não uma definição definitiva de sua identidade política.</p></details></div></section>
+      <section class="privacy-section wrap" id="privacidade"><span class="privacy-mark" aria-hidden="true">◈</span><div><h3>Suas ideias bastam. Seus dados pessoais, não.</h3><p>Não pedimos nome, email ou qualquer cadastro. Armazenamos respostas, progresso e resultado com um identificador aleatório. O link do resultado é público para quem o receber; suas respostas individuais não são exibidas. Cliques de compartilhamento são contabilizados, sem rastrear suas redes sociais.</p><p class="muted">Sua sessão fica neste navegador enquanto a aba estiver aberta. Após 30 minutos sem atividade, ela conta como abandono e pode ser retomada. Não usamos cookies de publicidade.</p></div></section>
+    </div>
+    <section id="quiz" class="quiz-section wrap" hidden aria-labelledby="question-title">
+      <div class="quiz-toolbar"><a href="/" class="text-link">← Voltar ao início</a><span class="quiz-anonymous">◈ Quiz anônimo</span></div>
+      <div class="quiz-progress-top"><span id="quiz-topic">Economia e sociedade</span><span><b id="question-number">01</b> / 40</span></div><progress id="quiz-progress" max="40" value="0" aria-label="Perguntas respondidas"></progress>
+      <div class="question-card"><p class="micro-label accent" id="question-kicker">PERGUNTA 01</p><h1 id="question-title" tabindex="-1"></h1><p class="question-instruction">O quanto você concorda com esta afirmação?</p>
+        <fieldset id="answers"><legend class="sr-only">Escolha uma resposta</legend>
+          <label class="answer-option"><input type="radio" name="answer" value="1"><span class="answer-dot dot-1"></span><span>Discordo <br>totalmente</span><small>1</small></label>
+          <label class="answer-option"><input type="radio" name="answer" value="2"><span class="answer-dot dot-2"></span><span>Discordo</span><small>2</small></label>
+          <label class="answer-option"><input type="radio" name="answer" value="3"><span class="answer-dot dot-3"></span><span>Neutro / <br>depende</span><small>3</small></label>
+          <label class="answer-option"><input type="radio" name="answer" value="4"><span class="answer-dot dot-4"></span><span>Concordo</span><small>4</small></label>
+          <label class="answer-option"><input type="radio" name="answer" value="5"><span class="answer-dot dot-5"></span><span>Concordo <br>totalmente</span><small>5</small></label>
+        </fieldset>
+        <div class="quiz-navigation"><button class="button button-outline" id="previous-question">← Anterior</button><span id="save-status" role="status">Selecione uma resposta</span><button class="button button-primary" id="next-question" disabled>Próxima pergunta →</button></div>
+        <div class="quiz-error" id="quiz-error" role="alert" hidden></div><button class="text-link" id="retry-save" hidden>Tentar salvar novamente</button>
+      </div><p class="quiz-footnote">Pense no que você acredita, não no que esperam que você responda.</p>
+    </section>
+    <div class="wrap"><p id="global-error" class="error-message" role="alert" hidden></p></div>
+  </main>
+  <footer class="site-footer wrap"><a class="footer-brand" href="/">prisma<span>Uma perspectiva. Não um rótulo.</span></a><div><a href="#metodologia">Sobre o teste</a><a href="#privacidade">Privacidade</a><a href="/admin">Administração ↗</a></div><span>Feito para pensar.</span></footer>
+</body>
+</html>

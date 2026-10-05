@@ -1,0 +1,15 @@
+**/node_modules
+**/.env*
+!**/.env.example
+**/.git
+**/.agents
+**/.codex
+**/.aws
+.DS_Store
+test-results
+**/test-results
+**/coverage
+backend/tests
+backend/.local
+deploy
+*.log
