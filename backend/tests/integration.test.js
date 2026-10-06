@@ -10,6 +10,9 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.NODE_ENV = 'test';
 process.env.APP_URL = 'http://localhost:3000,http://example.example,https://example.example';
 process.env.TRUST_PROXY = '0';
+process.env.SEO_URL = 'https://example.example';
+process.env.SEO_INDEXING_ENABLED = 'true';
+process.env.GOOGLE_SITE_VERIFICATION = 'integration-verification-token';
 process.env.ADMIN_PASSWORD = 'integration-test-password';
 process.env.JWT_SECRET = 'integration-test-secret-at-least-32-characters';
 const { app } = await import('../src/app.js');
@@ -36,6 +39,59 @@ test('admin protegida, login inválido, origem externa bloqueada', async () => {
   assert.match(res.headers['set-cookie'][0], /HttpOnly/);
   assert.match(res.headers['set-cookie'][0], /SameSite=Strict/);
   await admin.get('/admin').expect(200);
+});
+test('SEO público é renderizado no servidor com canonical, JSON-LD e CSP compatíveis', async () => {
+  const titles = new Set();
+  for (const path of ['/', '/metodologia', '/sobre', '/privacidade', '/perguntas-frequentes']) {
+    for (const Host of ['localhost:3000', 'example.example']) {
+      const response = await client.get(path).set('Host', Host).expect(200);
+      assert.equal(response.headers['content-language'], 'pt-BR');
+      assert.equal(response.headers['x-robots-tag'], undefined);
+      assert.ok(response.text.includes(`<link rel="canonical" href="https://example.example${path}">`));
+      assert.match(response.text, /<meta name="robots" content="index, follow, max-image-preview:large">/);
+      assert.equal((response.text.match(/<h1\b/g) || []).length, 1);
+      assert.doesNotMatch(response.text, /<!--(?:PAGE_|HOME_FAQ|ABANDONMENT_MINUTES)/);
+      const [, nonce, source] = response.text.match(/<script type="application\/ld\+json" nonce="([^"]+)">([^]*?)<\/script>/);
+      assert.ok(response.headers['content-security-policy'].includes(`'nonce-${nonce}'`));
+      const structured = JSON.parse(source);
+      assert.equal(structured['@context'], 'https://schema.org');
+      const page = structured['@graph'].find(item => item['@type'] === (path === '/sobre' ? 'AboutPage' : 'WebPage'));
+      assert.equal(page.url, `https://example.example${path}`);
+      if (path === '/') {
+        assert.match(response.text, /google-site-verification" content="integration-verification-token/);
+        assert.match(response.text, /Como descobrir meu lado político com este quiz/);
+        assert.equal(structured['@graph'].find(item => item['@type'] === 'WebSite').name, 'Prisma');
+      } else assert.equal(structured['@graph'].find(item => item['@type'] === 'BreadcrumbList').itemListElement.length, 2);
+      titles.add(response.text.match(/<title>(.*?)<\/title>/)[1]);
+    }
+  }
+  assert.equal(titles.size, 5);
+});
+test('sitemap concentra páginas editoriais e robots permite ler noindex dos resultados', async () => {
+  const sitemap = await client.get('/sitemap.xml').expect(200).expect('Content-Type', /application\/xml/);
+  const urls = [...sitemap.text.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
+  assert.deepEqual(urls, ['https://example.example/', 'https://example.example/metodologia', 'https://example.example/sobre', 'https://example.example/privacidade', 'https://example.example/perguntas-frequentes']);
+  assert.doesNotMatch(sitemap.text, /resultado|admin|localhost|lastmod|changefreq/);
+  const robots = await client.get('/robots.txt').expect(200).expect('Content-Type', /text\/plain/);
+  assert.match(robots.text, /Sitemap: https:\/\/example\.example\/sitemap\.xml/);
+  assert.doesNotMatch(robots.text, /Disallow: \/(?:resultado|css|js|assets)/);
+  for (const path of ['/admin/login', '/api/quiz/questions', '/health']) {
+    const response = await client.get(path).expect(200);
+    assert.match(response.headers['x-robots-tag'], /noindex/);
+  }
+  await client.get('/index.html').expect(301).expect('Location', '/');
+  await client.get('/metodologia/').expect(301).expect('Location', '/metodologia');
+  await client.get('/pagina-inexistente').set('Accept', 'text/html').expect(404).expect('X-Robots-Tag', 'noindex');
+});
+test('HTML e CSS públicos são comprimidos e PNG de compartilhamento existe', async () => {
+  for (const path of ['/', '/css/style.css']) {
+    await client.get(path).set('Accept-Encoding', 'gzip').expect(200).expect('Content-Encoding', 'gzip');
+  }
+  const apiResponse = await client.get('/api/quiz/questions').set('Accept-Encoding', 'gzip').expect(200);
+  assert.equal(apiResponse.headers['content-encoding'], undefined);
+  const image = await client.get('/assets/social-card.png').expect(200).expect('Content-Type', /image\/png/);
+  assert.equal(image.body.readUInt32BE(16), 1200);
+  assert.equal(image.body.readUInt32BE(20), 630);
 });
 test('catálogo e criação anônima com UUID v4 e chave de edição', async () => {
   const catalogue = await client.get('/api/quiz/questions').expect(200);
@@ -91,6 +147,8 @@ test('resultado público contém apenas resultado e SSR entrega Open Graph perso
   assert.deepEqual(res.body.economicView, { score: res.body.economicScore, label: res.body.economicLabel });
   assert.deepEqual(res.body.authorityView, { score: res.body.authorityScore, label: res.body.authorityLabel });
   const html = await client.get(`/resultado/${s.uuid}`).expect(200);
+  assert.match(html.headers['x-robots-tag'], /noindex/);
+  assert.match(html.text, /<meta name="robots" content="noindex, follow">/);
   assert.match(html.text, /og:title" content="Meu resultado: Direita Libertária/);
   assert.match(html.text, /og:url/);
   assert.doesNotMatch(html.text, /<!--RESULT_META-->/);

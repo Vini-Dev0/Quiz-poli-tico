@@ -11,13 +11,14 @@ const env = {
   ADMIN_PASSWORD: 'strong-admin-test-password',
   JWT_SECRET: 'test-jwt-secret-with-at-least-32-characters',
   ABANDONMENT_MINUTES: '30',
-  TRUST_PROXY: '1'
+  TRUST_PROXY: '1',
+  SEO_URL: '', SEO_INDEXING_ENABLED: '', GOOGLE_SITE_VERIFICATION: ''
 };
-const check = overrides => spawnSync(process.execPath, ['--input-type=module', '-e', 'import { config } from "./src/config.js"; console.log(JSON.stringify({port:config.port, production:config.production, cookie:config.adminCookie, appUrl:config.appUrl, appUrls:config.appUrls}));'], { cwd: new URL('..', import.meta.url), env: { ...env, ...overrides }, encoding: 'utf8' });
+const check = overrides => spawnSync(process.execPath, ['--input-type=module', '-e', 'import { config } from "./src/config.js"; console.log(JSON.stringify({port:config.port, production:config.production, cookie:config.adminCookie, appUrl:config.appUrl, appUrls:config.appUrls, seoUrl:config.seoUrl, seoIndexingEnabled:config.seoIndexingEnabled}));'], { cwd: new URL('..', import.meta.url), env: { ...env, ...overrides }, encoding: 'utf8' });
 test('produção funciona somente com variáveis em runtime, sem arquivo .env', () => {
   const result = check({});
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout), { port: 3000, production: true, cookie: '__Host-prisma_admin', appUrl: 'https://quiz.example.com', appUrls: ['https://quiz.example.com'] });
+  assert.deepEqual(JSON.parse(result.stdout), { port: 3000, production: true, cookie: '__Host-prisma_admin', appUrl: 'https://quiz.example.com', appUrls: ['https://quiz.example.com'], seoUrl: 'https://quiz.example.com', seoIndexingEnabled: true });
 });
 test('produção recusa HTTP e APP_URL com caminhos', () => {
   for (const APP_URL of ['http://quiz.example.com', 'https://quiz.example.com/admin', 'https://quiz.example.com/?preview=1']) assert.notEqual(check({ APP_URL }).status, 0);
@@ -59,4 +60,26 @@ test('valida todas as URLs e recusa entradas vazias, credenciais ou HTTP em prod
     ',https://quiz.example.com',
     'https://quiz.example.com,,https://example.example'
   ]) assert.notEqual(check({ APP_URL }).status, 0, APP_URL);
+});
+test('SEO ignora localhost por padrão e aceita escolher o domínio principal permitido', () => {
+  const automatic = check({ NODE_ENV: 'development', APP_URL: 'http://localhost:3000,https://ladopolitico.online' });
+  assert.equal(automatic.status, 0, automatic.stderr);
+  assert.equal(JSON.parse(automatic.stdout).seoUrl, 'https://ladopolitico.online');
+  assert.equal(JSON.parse(automatic.stdout).seoIndexingEnabled, false);
+  const selected = check({ APP_URL: 'https://quiz.example.com,https://ladopolitico.online', SEO_URL: 'https://ladopolitico.online/' });
+  assert.equal(selected.status, 0, selected.stderr);
+  assert.equal(JSON.parse(selected.stdout).seoUrl, 'https://ladopolitico.online');
+  assert.notEqual(check({ SEO_URL: 'https://evil.example' }).status, 0);
+  assert.notEqual(check({ SEO_URL: 'https://quiz.example.com/admin' }).status, 0);
+});
+test('homologação pode desligar indexação, e token de verificação não aceita HTML', () => {
+  const staging = check({ SEO_INDEXING_ENABLED: 'false' });
+  assert.equal(staging.status, 0, staging.stderr);
+  assert.equal(JSON.parse(staging.stdout).seoIndexingEnabled, false);
+  const localhost = check({ NODE_ENV: 'development', APP_URL: 'http://localhost:3000', SEO_INDEXING_ENABLED: 'true' });
+  assert.equal(localhost.status, 0, localhost.stderr);
+  assert.equal(JSON.parse(localhost.stdout).seoIndexingEnabled, false);
+  assert.notEqual(check({ SEO_INDEXING_ENABLED: 'invalid' }).status, 0);
+  assert.notEqual(check({ GOOGLE_SITE_VERIFICATION: '"><script>alert(1)</script>' }).status, 0);
+  assert.equal(check({ GOOGLE_SITE_VERIFICATION: 'valid_google-verification-token' }).status, 0);
 });

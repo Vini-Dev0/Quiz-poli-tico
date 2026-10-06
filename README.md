@@ -4,6 +4,8 @@ Aplicação full stack em **HTML/CSS/JavaScript puro**, **Node.js 22**, **Expres
 
 **Deploy em VPS com EasyPanel:** siga [o guia de deploy](deploy/EASYPANEL.md). Use o `Dockerfile` da raiz com Build Path `/` e cadastre os segredos em **App → Environment**. O `.env` local não precisa ser enviado para a VPS.
 
+**SEO de ladopolitico.online:** o [guia de SEO](deploy/SEO.md) explica indexação, palavras-chave, Search Console e validação após deploy. Configure `SEO_URL=https://ladopolitico.online` e `SEO_INDEXING_ENABLED=true` na produção. A landing e quatro páginas editoriais têm metadata no servidor, JSON-LD, canonical, sitemap e preview PNG; resultados pessoais e administração ficam fora da indexação.
+
 ## Executar rapidamente
 
 É necessário Node.js 22+, npm e Docker com Compose. Na raiz:
@@ -48,6 +50,9 @@ Alternativa ao setup: copie `backend/.env.example` para `backend/.env` e preench
 | `ADMIN_PASSWORD` | Senha administrativa com pelo menos 12 caracteres |
 | `JWT_SECRET` | Segredo aleatório com pelo menos 32 caracteres |
 | `APP_URL` | Uma ou mais origens públicas separadas por vírgula, sem subdiretório; usadas nas URLs, Open Graph e proteção de origem |
+| `SEO_URL` | Origem principal para canonical e sitemap; deve estar em `APP_URL`. Padrão: primeira origem que não seja localhost |
+| `SEO_INDEXING_ENABLED` | `true` na publicação; `false` na homologação. Padrão: habilitado em produção com origem pública, desabilitado localmente |
+| `GOOGLE_SITE_VERIFICATION` | Opcional: somente o token da metatag fornecida pelo Search Console |
 | `PORT` | Porta do Express; padrão 3000 |
 | `NODE_ENV` | `development` local; `production` exige HTTPS em todas as URLs de `APP_URL` e cookie Secure |
 | `ABANDONMENT_MINUTES` | Minutos de inatividade; padrão 30 |
@@ -59,7 +64,7 @@ Para acessar a mesma aplicação por duas URLs em desenvolvimento:
 APP_URL=http://localhost:3000,http://example.example
 ```
 
-Cada domínio precisa apontar para o mesmo backend. A lista aceita espaços entre as URLs e barras finais, que são normalizados; caminhos, parâmetros, credenciais e entradas vazias são recusados. Uma única URL continua válida. Links de conclusão, retomada, compartilhamento, canonical e Open Graph usam a origem acessada quando ela está na lista. A primeira URL é a alternativa para acessos por endereços internos ou hosts não cadastrados. Não use a lista inteira como um link.
+Cada domínio precisa apontar para o mesmo backend. A lista aceita espaços entre as URLs e barras finais, que são normalizados; caminhos, parâmetros, credenciais e entradas vazias são recusados. Uma única URL continua válida. Links de conclusão, retomada e compartilhamento, junto das metatags dos resultados pessoais, usam a origem acessada quando ela está na lista. A landing e as páginas editoriais usam `SEO_URL` para canonical e sitemap. A primeira URL de `APP_URL` é a alternativa para links de resultados em acessos internos ou hosts não cadastrados. Não use a lista inteira como um link.
 
 Em produção, use somente origens HTTPS, por exemplo `APP_URL=https://quiz.seudominio.com,https://teste.seudominio.com`. Cadastre ambos os domínios no proxy/EasyPanel, encaminhando ao mesmo serviço e porta. O frontend e a API continuam na mesma origem em cada domínio; não é necessário CORS. Cookies administrativos e o progresso no navegador pertencem a cada origem, enquanto os resultados e métricas continuam no mesmo banco. Não há sincronização automática de login ou de sessão do quiz entre domínios. Reinicie o backend ou faça Deploy depois de alterar a lista.
 

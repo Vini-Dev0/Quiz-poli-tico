@@ -49,6 +49,7 @@ try {
 
   docker(['run', '-d', '--name', app, '--network', network,
     '-e', 'APP_URL=https://quiz.example.com,https://test.example.com', '-e', 'TRUST_PROXY=1',
+    '-e', 'SEO_URL=https://quiz.example.com', '-e', 'SEO_INDEXING_ENABLED=true',
     '-e', 'DATABASE_URL', '-e', 'ADMIN_PASSWORD', '-e', 'JWT_SECRET', image],
     { env: { ...process.env, DATABASE_URL: `postgresql://quiz:${password}@${database}:5432/quiz?schema=public`, ADMIN_PASSWORD: adminPassword, JWT_SECRET: randomBytes(48).toString('hex') } });
   await untilHealthy();
@@ -70,7 +71,13 @@ try {
       return {data:await response.json(), cookie:response.headers.get('set-cookie')};
     }
     const landing = await fetch(origin);
-    assert.match(await landing.text(), /Suas ideias/);
+    const landingHtml = await landing.text();
+    assert.match(landingHtml, /Descubra seu/);
+    assert.ok(landingHtml.includes('<link rel="canonical" href="'+publicOrigins[0]+'/">'));
+    const robots = await fetch(origin+'/robots.txt');
+    assert.ok((await robots.text()).includes('Sitemap: '+publicOrigins[0]+'/sitemap.xml'));
+    const sitemap = await fetch(origin+'/sitemap.xml');
+    assert.equal(((await sitemap.text()).match(/<loc>/g)||[]).length,5);
     const catalogue = (await api('/quiz/questions')).data;
     assert.equal(catalogue.total,40);
     const started = (await api('/quiz/start','POST')).data;
@@ -85,6 +92,7 @@ try {
       const resumed = (await api('/quiz/'+started.uuid,'GET',undefined,{...headers,'X-Quiz-Token':started.token})).data;
       assert.equal(resumed.resultUrl,url);
       const publicResult = await fetch(origin + '/resultado/' + started.uuid,{headers});
+      assert.match(publicResult.headers.get('x-robots-tag'),/noindex/);
       const html = await publicResult.text();
       assert.match(html,/og:title/);
       assert.ok(html.includes('<link rel="canonical" href="'+url+'">'));
@@ -107,6 +115,7 @@ try {
     console.log('Fluxo do container validado em duas URLs: quiz, links, Open Graph, compartilhamento e administração com cookie Secure.');
   `;
   console.log(docker(['exec', '-i', app, 'node', '--input-type=module', '-'], { input: flow }));
+  console.log(docker(['exec', app, 'node', 'scripts/seo-check.js', 'http://127.0.0.1:3000', 'https://quiz.example.com']));
   docker(['restart', app]);
   await untilHealthy();
   docker(['exec', app, 'node', '--input-type=module', '-e',

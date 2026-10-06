@@ -22,6 +22,7 @@ COPY --from=dependencies --chown=node:node /app/backend/package.json /app/backen
 COPY --chown=node:node backend/prisma ./prisma
 COPY --chown=node:node backend/src ./src
 COPY --chown=node:node backend/scripts/healthcheck.js ./scripts/healthcheck.js
+COPY --chown=node:node backend/scripts/seo-check.js ./scripts/seo-check.js
 COPY --chown=node:node --chmod=755 backend/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --chown=node:node frontend /app/frontend
 

@@ -6,6 +6,7 @@ Object.assign(process.env, {
   DOTENV_CONFIG_PATH: '/nonexistent/prisma-quiz-test.env',
   NODE_ENV: 'test',
   APP_URL: 'http://localhost:3000,http://example.example,https://example.example',
+  SEO_URL: '', SEO_INDEXING_ENABLED: '', GOOGLE_SITE_VERIFICATION: '',
   DATABASE_URL: 'postgresql://quiz:test@database:5432/quiz',
   ADMIN_PASSWORD: 'app-url-test-password',
   JWT_SECRET: 'app-url-test-secret-at-least-32-characters'

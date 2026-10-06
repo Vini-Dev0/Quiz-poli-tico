@@ -18,6 +18,24 @@ const appUrls = [...new Set(required('APP_URL').split(',').map(value => {
   if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new Error('Cada URL em APP_URL deve conter apenas a origem pública, sem caminho, parâmetros ou credenciais.');
   return url.origin;
 }))];
+const isLocalOrigin = origin => {
+  const hostname = new URL(origin).hostname;
+  return hostname === 'localhost' || hostname.endsWith('.localhost') || /^127\./.test(hostname) || ['0.0.0.0', '[::1]'].includes(hostname);
+};
+let seoUrl = appUrls.find(origin => !isLocalOrigin(origin)) || appUrls[0];
+if (process.env.SEO_URL?.trim()) {
+  try {
+    const url = new URL(process.env.SEO_URL.trim());
+    if (url.username || url.password || url.pathname !== '/' || url.search || url.hash || !appUrls.includes(url.origin)) throw new Error('invalid');
+    seoUrl = url.origin;
+  } catch {
+    throw new Error('SEO_URL deve ser uma das origens de APP_URL, sem caminho, parâmetros ou credenciais.');
+  }
+}
+const indexing = process.env.SEO_INDEXING_ENABLED?.trim();
+if (indexing && !['true', 'false'].includes(indexing)) throw new Error('SEO_INDEXING_ENABLED deve ser true ou false.');
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim() || '';
+if (googleSiteVerification && !/^[A-Za-z0-9_-]{1,256}$/.test(googleSiteVerification)) throw new Error('GOOGLE_SITE_VERIFICATION deve conter somente o token fornecido pelo Search Console.');
 const port = Number(process.env.PORT || 3000);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT deve ser uma porta válida entre 1 e 65535.');
 const databaseUrl = required('DATABASE_URL');
@@ -34,6 +52,9 @@ export const config = {
   production,
   appUrl: appUrls[0],
   appUrls: Object.freeze(appUrls),
+  seoUrl,
+  seoIndexingEnabled: (indexing ? indexing === 'true' : production) && !isLocalOrigin(seoUrl),
+  googleSiteVerification,
   databaseUrl,
   adminPassword: required('ADMIN_PASSWORD', 12),
   jwtSecret: required('JWT_SECRET', 32),

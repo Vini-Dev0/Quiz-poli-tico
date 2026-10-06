@@ -1,5 +1,7 @@
 # Deploy do Prisma no EasyPanel
 
+Para publicar com foco em buscas de quiz político no domínio `ladopolitico.online`, siga também o [guia de SEO](SEO.md). Use `SEO_URL=https://ladopolitico.online` e `SEO_INDEXING_ENABLED=true`; o exemplo de ambiente deste diretório já inclui essas variáveis.
+
 O `Dockerfile` na raiz entrega frontend, API, páginas públicas e administração em uma única imagem. Ele instala dependências de produção, gera o Prisma Client, inclui as migrations, executa como usuário `node`, possui healthcheck e usa Tini para encaminhar sinais e encerrar o servidor corretamente.
 
 **O `.env` local não precisa ir para a VPS.** Cadastre suas informações no EasyPanel em **Projeto → serviço App da aplicação → Environment / Variáveis de ambiente**. O painel injeta os valores em `process.env` quando cria o container. Deixe **Create env file** desativado. O Dockerfile não declara argumentos de build para senhas e não incorpora variáveis secretas nas camadas da imagem. O `.dockerignore` exclui arquivos `.env`, incluindo variações e subpastas.
@@ -57,6 +59,9 @@ Há uma cópia em [easypanel.env.example](easypanel.env.example). Os valores `re
 | `NODE_ENV` | `production`, para ativar cookies Secure e proteções de produção |
 | `PORT` | `3000`, a mesma porta de destino do domínio |
 | `APP_URL` | Uma ou mais origens HTTPS separadas por vírgula, por exemplo `https://quiz.seudominio.com,https://teste.seudominio.com`; sem `/admin`, `/api` ou outro caminho |
+| `SEO_URL` | `https://ladopolitico.online`, também presente em `APP_URL`; concentra canonical e sitemap no domínio principal |
+| `SEO_INDEXING_ENABLED` | `true` na publicação; `false` somente em homologação |
+| `GOOGLE_SITE_VERIFICATION` | Opcional: token da verificação por metatag no Search Console |
 | `DATABASE_URL` | URL interna copiada do Postgres em Credentials |
 | `ADMIN_PASSWORD` | Senha administrativa forte com pelo menos 12 caracteres |
 | `JWT_SECRET` | Segredo aleatório com pelo menos 32 caracteres, diferente da senha administrativa |
@@ -97,7 +102,7 @@ Aponte o DNS do domínio para a VPS, marque esse domínio como principal e coloq
 APP_URL=https://quiz.seudominio.com,https://teste.seudominio.com
 ```
 
-Os links de resultado e as metatags preservam o domínio acessado. A primeira URL é usada como alternativa para solicitações internas ou hosts não cadastrados. Uma única origem continua sendo aceita. Cada domínio mantém seu próprio cookie administrativo e progresso no navegador; o banco e as métricas são compartilhados.
+Os links de resultados pessoais e as metatags dessas páginas preservam o domínio acessado. A landing e as páginas editoriais concentram canonical e sitemap em `SEO_URL`. A primeira URL de `APP_URL` é usada como alternativa nos links de resultados para solicitações internas ou hosts não cadastrados. Uma única origem continua sendo aceita. Cada domínio mantém seu próprio cookie administrativo e progresso no navegador; o banco e as métricas são compartilhados.
 
 O proxy termina o HTTPS e encaminha HTTP para a aplicação em `0.0.0.0:3000`. O HTTPS público é necessário para o cookie administrativo Secure, e todas as URLs da lista devem usar HTTPS quando `NODE_ENV=production`. O exemplo `http://localhost:3000,http://example.example` é aceito em desenvolvimento. Mantenha a porta HTTP acessível por **Domains**; não é necessário publicar a porta 3000 como porta TCP externa em Advanced → Ports.
 

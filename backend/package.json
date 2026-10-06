@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "setup": "node scripts/setup-env.js",
     "dev": "node --watch src/server.js",
@@ -12,13 +14,16 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "test": "node --test tests/scoring.test.js tests/validation.test.js tests/config.test.js tests/result-view.test.js tests/app-url.test.js",
+    "test": "node --test tests/scoring.test.js tests/validation.test.js tests/config.test.js tests/result-view.test.js tests/app-url.test.js tests/seo.test.js",
+    "assets:build": "node scripts/build-social-assets.js",
+    "seo:check": "node scripts/seo-check.js",
     "test:integration": "node --test --test-concurrency=1 tests/integration.test.js",
     "test:e2e": "playwright test",
     "test:docker": "node tests/deployment-smoke.js"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
+    "compression": "1.8.1",
     "cookie-parser": "1.4.7",
     "dotenv": "16.6.1",
     "express": "5.2.1",
@@ -27,6 +32,11 @@
     "jsonwebtoken": "9.0.3",
     "prisma": "6.19.3"
   },
-  "devDependencies": { "supertest": "7.2.2", "@playwright/test": "1.56.1" },
-  "overrides": { "deepmerge-ts": "8.0.2" }
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "supertest": "7.2.2"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2"
+  }
 }

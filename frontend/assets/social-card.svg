@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow"><stop stop-color="#503e75"/><stop offset="1" stop-color="#101016"/></radialGradient>
+    <linearGradient id="accent" x2="1" y2="1"><stop stop-color="#eee1ff"/><stop offset="1" stop-color="#b79aea"/></linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" fill="none" stroke="#c3a7f7" stroke-opacity=".11"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#101016"/>
+  <rect x="560" y="0" width="640" height="630" fill="url(#glow)"/>
+  <rect x="38" y="38" width="1124" height="554" rx="26" fill="#16131e" fill-opacity=".65" stroke="#c3a7f7" stroke-opacity=".2"/>
+  <g font-family="system-ui,-apple-system,sans-serif">
+    <rect x="78" y="75" width="48" height="48" rx="13" fill="#21192f" stroke="#514477"/>
+    <path d="m102 83 16 16-16 16-16-16Z M102 83v32 M86 99h32 m-5-11-22 22" fill="none" stroke="#c3a7f7" stroke-width="1.6"/>
+    <text x="141" y="110" fill="#f3eaff" font-size="37" font-weight="700">prisma</text>
+    <text x="79" y="192" fill="#c3a7f7" font-size="17" letter-spacing="2">QUIZ POLÍTICO EM DOIS EIXOS</text>
+    <text x="75" y="282" fill="#f3f1f7" font-size="66" font-weight="650" letter-spacing="-2">Descubra seu</text>
+    <text x="75" y="363" fill="url(#accent)" font-size="71" font-weight="650" letter-spacing="-2">lado político.</text>
+    <text x="79" y="430" fill="#b8aac9" font-size="22">40 perguntas · gratuito · sem cadastro</text>
+    <text x="79" y="525" fill="#c8b0e8" font-size="21">ladopolitico.online</text>
+    <rect x="741" y="177" width="338" height="294" rx="16" fill="url(#grid)"/>
+    <path d="M741 324h338M910 177v294" stroke="#c8b0e8" stroke-opacity=".6" stroke-width="1.3"/>
+    <circle cx="910" cy="324" r="47" fill="#c3a7f7" fill-opacity=".04" stroke="#c3a7f7" stroke-opacity=".2"/>
+    <circle cx="910" cy="324" r="10" fill="#dac4fb"/>
+    <text x="910" y="151" fill="#c4afd9" text-anchor="middle" font-size="15" letter-spacing="1">AUTORIDADE</text>
+    <text x="910" y="502" fill="#c4afd9" text-anchor="middle" font-size="15" letter-spacing="1">ECONOMIA</text>
+    <text x="910" y="545" fill="#857392" text-anchor="middle" font-size="12">MAPA ILUSTRATIVO</text>
+  </g>
+</svg>
