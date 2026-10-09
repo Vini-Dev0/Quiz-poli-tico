@@ -4,7 +4,9 @@ Aplicação full stack em **HTML/CSS/JavaScript puro**, **Node.js 22**, **Expres
 
 **Deploy em VPS com EasyPanel:** siga [o guia de deploy](deploy/EASYPANEL.md). Use o `Dockerfile` da raiz com Build Path `/` e cadastre os segredos em **App → Environment**. O `.env` local não precisa ser enviado para a VPS.
 
-**SEO de ladopolitico.online:** o [guia de SEO](deploy/SEO.md) explica indexação, palavras-chave, Search Console e validação após deploy. Configure `SEO_URL=https://ladopolitico.online` e `SEO_INDEXING_ENABLED=true` na produção. A landing e quatro páginas editoriais têm metadata no servidor, JSON-LD, canonical, sitemap e preview PNG; resultados pessoais e administração ficam fora da indexação.
+**SEO de ladopolitico.online:** o [guia de SEO](deploy/SEO.md) explica indexação, palavras-chave, Search Console e validação após deploy. Configure `SEO_URL=https://ladopolitico.online` e `SEO_INDEXING_ENABLED=true` na produção. As cinco páginas públicas têm versões nos quatro idiomas, metadata no servidor, JSON-LD, canonical próprio, hreflang, sitemap e previews PNG; resultados pessoais e administração ficam fora da indexação.
+
+**Idiomas:** português brasileiro, inglês, espanhol e chinês simplificado, com URLs `/pt-br/`, `/en/`, `/es/` e `/zh-cn/`. O [guia de internacionalização](deploy/I18N.md) explica detecção, preferência manual, traduções, compatibilidade de URLs antigas, testes e hospedagem. O seletor preserva respostas e progresso do quiz.
 
 ## Executar rapidamente
 
@@ -78,7 +80,7 @@ Para alterar a senha, edite `ADMIN_PASSWORD` e reinicie o backend. Para invalida
 
 ## Perguntas e cálculo
 
-**As 40 perguntas anteriores mencionadas no pedido não estavam disponíveis na conversa nem no diretório. O catálogo entregue contém 40 afirmações propostas para o projeto, identificadas como tal, e não uma reprodução daquele questionário.** Todas estão em `backend/src/data/questions.js`. Há 20 perguntas econômicas e 20 de autoridade, com 10 direções positivas e 10 negativas por eixo e peso 1.
+**As 40 perguntas anteriores mencionadas no pedido não estavam disponíveis na conversa nem no diretório. O catálogo entregue contém 40 afirmações propostas para o projeto, identificadas como tal, e não uma reprodução daquele questionário.** As regras estão em `backend/src/data/questions.js`; os textos centralizados por ID estão em `frontend/locales/<idioma>/quiz.json`. Há 20 perguntas econômicas e 20 de autoridade, com 10 direções positivas e 10 negativas por eixo e peso 1. Internacionalizar não altera IDs, pesos, scores ou classificações persistidas.
 
 O frontend busca a mesma fonte por `GET /api/quiz/questions`; não existe um segundo questionário divergente. Texto e tópico são enviados ao navegador. Pesos e cálculo oficial ficam no backend. As funções solicitadas estão em `backend/src/utils/scoring.js`.
 
@@ -114,7 +116,7 @@ Um job roda a cada minuto, na inicialização e antes das consultas administrati
 
 ## API REST
 
-Todas as respostas de erro usam `{ "error": "mensagem" }`.
+Todas as respostas de erro usam `{ "error": "mensagem", "code": "chaveEstavel" }`. O header opcional `X-Language` seleciona o idioma das mensagens, catálogo e rótulos; sem ele, o fallback é português. As URLs localizadas são geradas para o frontend que envia esse header; URLs antigas continuam funcionando.
 
 | Método | Rota | Autorização / comportamento |
 | --- | --- | --- |
@@ -177,6 +179,9 @@ Testes de cálculo e validação, sem banco:
 ```sh
 cd backend
 npm test
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 Integração usa PostgreSQL real e **somente** o schema dedicado `quiz_test`. Os testes recusam a ausência de `TEST_DATABASE_URL` ou um schema diferente. Não execute contra produção. Com o banco local de desenvolvimento:
@@ -195,7 +200,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-O navegador testa o quiz completo, retomada, resultado público, compartilhamento, login administrativo, filtros e layout móvel. Artefatos de teste ficam em `test-results/`, ignorado pelo Git. Em máquinas com Chrome instalado, `PLAYWRIGHT_CHROME=1 npm run test:e2e` usa esse navegador.
+O navegador testa o quiz completo, retomada, resultado público, compartilhamento, login administrativo, filtros, layout móvel e os quatro idiomas. Artefatos de teste ficam em `test-results/`, ignorado pelo Git. Em máquinas com Chrome instalado, `PLAYWRIGHT_CHROME=1 npm run test:e2e` usa esse navegador. `npm run test:i18n` executa somente os testes unitários de internacionalização. A checagem de tipos cobre o módulo compartilhado de configuração via JSDoc; o restante permanece JavaScript. `build` gera Prisma e valida lint/tipos/i18n; a imagem de produção é verificada por `npm run test:docker`.
 
 ## Deploy
 

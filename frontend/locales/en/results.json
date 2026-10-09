@@ -1,0 +1,39 @@
+{
+  "economic": [
+    "Far left",
+    "Left",
+    "Center-left",
+    "Center",
+    "Center-right",
+    "Right",
+    "Radical right"
+  ],
+  "authority": [
+    "Radical libertarian",
+    "Libertarian",
+    "Liberal",
+    "Center",
+    "Moderately authoritarian",
+    "Authoritarian",
+    "Strongly authoritarian"
+  ],
+  "political": {
+    "center": "Center",
+    "left": "Left",
+    "right": "Right",
+    "centerLibertarian": "Libertarian center",
+    "centerAuthoritarian": "Authoritarian center",
+    "leftLibertarian": "Libertarian left",
+    "leftAuthoritarian": "Authoritarian left",
+    "rightLibertarian": "Libertarian right",
+    "rightAuthoritarian": "Authoritarian right"
+  },
+  "reading": "On this axis, your result is {label}, with a score of {score} on the −100 to +100 scale.",
+  "axisAria": "{axis}: {label}, {score} on a scale from minus 100 to plus 100",
+  "compass": "Your result: economics {economic}, authority {authority}",
+  "shareTitle": "My result: {label}",
+  "shareText": "I explored my political outlook!\nResult: {label}\nEconomic perspective: {economicLabel} ({economic})\nAuthority perspective: {authorityLabel} ({authority})\nTake the quiz:",
+  "description": "Economic perspective: {economicLabel} ({economic}). Authority perspective: {authorityLabel} ({authority}). Two dimensions of the same result.",
+  "javascript": "Enable JavaScript to view the chart and share your result.",
+  "cardFooter": "40 questions. Two axes. A fresh perspective."
+}

@@ -31,18 +31,18 @@ after(async () => { await prisma.quizSession.deleteMany(); await prisma.adminSes
 test('admin protegida, login inválido, origem externa bloqueada', async () => {
   for (const path of ['stats', 'results', 'distribution', 'scatter']) await client.get(`/api/admin/${path}`).expect(401);
   await client.post('/api/admin/logout').expect(401);
-  await client.get('/admin').expect(302).expect('Location', '/admin/login');
+  await client.get('/pt-br/admin').expect(302).expect('Location', '/pt-br/admin/login');
   await client.get('/admin.html').expect(404);
   await client.post('/api/admin/login').send({ password: 'wrong-password' }).expect(401);
   await client.post('/api/admin/login').set('Origin', 'https://evil.example').send({ password: process.env.ADMIN_PASSWORD }).expect(403);
   const res = await admin.post('/api/admin/login').send({ password: process.env.ADMIN_PASSWORD }).expect(200);
   assert.match(res.headers['set-cookie'][0], /HttpOnly/);
   assert.match(res.headers['set-cookie'][0], /SameSite=Strict/);
-  await admin.get('/admin').expect(200);
+  await admin.get('/pt-br/admin').expect(200);
 });
 test('SEO público é renderizado no servidor com canonical, JSON-LD e CSP compatíveis', async () => {
   const titles = new Set();
-  for (const path of ['/', '/metodologia', '/sobre', '/privacidade', '/perguntas-frequentes']) {
+  for (const path of ['/pt-br/', '/pt-br/metodologia', '/pt-br/sobre', '/pt-br/privacidade', '/pt-br/perguntas-frequentes']) {
     for (const Host of ['localhost:3000', 'example.example']) {
       const response = await client.get(path).set('Host', Host).expect(200);
       assert.equal(response.headers['content-language'], 'pt-BR');
@@ -55,9 +55,9 @@ test('SEO público é renderizado no servidor com canonical, JSON-LD e CSP compa
       assert.ok(response.headers['content-security-policy'].includes(`'nonce-${nonce}'`));
       const structured = JSON.parse(source);
       assert.equal(structured['@context'], 'https://schema.org');
-      const page = structured['@graph'].find(item => item['@type'] === (path === '/sobre' ? 'AboutPage' : 'WebPage'));
+      const page = structured['@graph'].find(item => item['@type'] === (path === '/pt-br/sobre' ? 'AboutPage' : 'WebPage'));
       assert.equal(page.url, `https://example.example${path}`);
-      if (path === '/') {
+      if (path === '/pt-br/') {
         assert.match(response.text, /google-site-verification" content="integration-verification-token/);
         assert.match(response.text, /Como descobrir meu lado político com este quiz/);
         assert.equal(structured['@graph'].find(item => item['@type'] === 'WebSite').name, 'Prisma');
@@ -70,21 +70,23 @@ test('SEO público é renderizado no servidor com canonical, JSON-LD e CSP compa
 test('sitemap concentra páginas editoriais e robots permite ler noindex dos resultados', async () => {
   const sitemap = await client.get('/sitemap.xml').expect(200).expect('Content-Type', /application\/xml/);
   const urls = [...sitemap.text.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
-  assert.deepEqual(urls, ['https://example.example/', 'https://example.example/metodologia', 'https://example.example/sobre', 'https://example.example/privacidade', 'https://example.example/perguntas-frequentes']);
+  assert.equal(urls.length,20);
+  assert.ok(urls.includes('https://example.example/en/metodologia'));
+  assert.ok(urls.includes('https://example.example/zh-cn/'));
   assert.doesNotMatch(sitemap.text, /resultado|admin|localhost|lastmod|changefreq/);
   const robots = await client.get('/robots.txt').expect(200).expect('Content-Type', /text\/plain/);
   assert.match(robots.text, /Sitemap: https:\/\/example\.example\/sitemap\.xml/);
   assert.doesNotMatch(robots.text, /Disallow: \/(?:resultado|css|js|assets)/);
-  for (const path of ['/admin/login', '/api/quiz/questions', '/health']) {
+  for (const path of ['/pt-br/admin/login', '/api/quiz/questions', '/health']) {
     const response = await client.get(path).expect(200);
     assert.match(response.headers['x-robots-tag'], /noindex/);
   }
-  await client.get('/index.html').expect(301).expect('Location', '/');
-  await client.get('/metodologia/').expect(301).expect('Location', '/metodologia');
+  await client.get('/index.html').expect(302).expect('Location', '/pt-br/');
+  await client.get('/pt-br/metodologia/').expect(308).expect('Location', '/pt-br/metodologia');
   await client.get('/pagina-inexistente').set('Accept', 'text/html').expect(404).expect('X-Robots-Tag', 'noindex');
 });
 test('HTML e CSS públicos são comprimidos e PNG de compartilhamento existe', async () => {
-  for (const path of ['/', '/css/style.css']) {
+  for (const path of ['/pt-br/', '/css/style.css']) {
     await client.get(path).set('Accept-Encoding', 'gzip').expect(200).expect('Content-Encoding', 'gzip');
   }
   const apiResponse = await client.get('/api/quiz/questions').set('Accept-Encoding', 'gzip').expect(200);
@@ -146,16 +148,16 @@ test('resultado público contém apenas resultado e SSR entrega Open Graph perso
   for (const key of ['id', 'answers', 'editTokenHash', 'lastActivityAt', 'shared']) assert.equal(res.body[key], undefined);
   assert.deepEqual(res.body.economicView, { score: res.body.economicScore, label: res.body.economicLabel });
   assert.deepEqual(res.body.authorityView, { score: res.body.authorityScore, label: res.body.authorityLabel });
-  const html = await client.get(`/resultado/${s.uuid}`).expect(200);
+  const html = await client.get(`/pt-br/resultado/${s.uuid}`).expect(200);
   assert.match(html.headers['x-robots-tag'], /noindex/);
   assert.match(html.text, /<meta name="robots" content="noindex, follow">/);
   assert.match(html.text, /og:title" content="Meu resultado: Direita Libertária/);
   assert.match(html.text, /og:url/);
   assert.doesNotMatch(html.text, /<!--RESULT_META-->/);
-  const card = await client.get(`/resultado/${s.uuid}/card.svg`).expect(200).expect('Content-Type', /image\/svg\+xml/);
+  const card = await client.get(`/pt-br/resultado/${s.uuid}/card.svg`).expect(200).expect('Content-Type', /image\/svg\+xml/);
   const cardText = card.text || card.body.toString('utf8');
-  assert.match(cardText, /VISÃO ECONÔMICA/);
-  assert.match(cardText, /VISÃO DE AUTORIDADE/);
+  assert.match(cardText, /Visão econômica/);
+  assert.match(cardText, /Visão de autoridade/);
   assert.match(cardText, /Libertário radical/);
   await client.get(`/api/results/${randomUUID()}`).expect(404);
 });
@@ -225,10 +227,10 @@ test('ambas as origens suportam quiz, links, compartilhamento e login administra
     assert.equal(completed.body.resultUrl, url);
     const resumed = await client.get(`/api/quiz/${uuid}`).set(headers).set('X-Quiz-Token', token).expect(200);
     assert.equal(resumed.body.resultUrl, url);
-    const html = await client.get(`/resultado/${uuid}`).set(headers).expect(200);
-    assert.ok(html.text.includes(`<link rel="canonical" href="${url}">`));
-    assert.ok(html.text.includes(`<meta property="og:url" content="${url}">`));
-    assert.ok(html.text.includes(`<meta property="og:image" content="${url}/card.svg">`));
+    const html = await client.get(`/pt-br/resultado/${uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${url.replace('/resultado/', '/pt-br/resultado/')}">`));
+    assert.ok(html.text.includes(`<meta property="og:url" content="${url.replace('/resultado/', '/pt-br/resultado/')}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${url.replace('/resultado/', '/pt-br/resultado/')}/card.svg">`));
     await client.post(`/api/quiz/${uuid}/share`).set(headers).expect(200);
     const login = await client.post('/api/admin/login').set(headers).send({ password: process.env.ADMIN_PASSWORD }).expect(200);
     assert.doesNotMatch(login.headers['set-cookie'][0], /Domain=/i);
@@ -250,9 +252,9 @@ test('domínios externos continuam bloqueados e hosts desconhecidos não contami
   ]) {
     const resumed = await client.get(`/api/quiz/${s.uuid}`).set(headers).set('X-Quiz-Token', s.token).expect(200);
     assert.equal(resumed.body.resultUrl, fallbackUrl);
-    const html = await client.get(`/resultado/${s.uuid}`).set(headers).expect(200);
-    assert.ok(html.text.includes(`<link rel="canonical" href="${fallbackUrl}">`));
-    assert.ok(html.text.includes(`<meta property="og:image" content="${fallbackUrl}/card.svg">`));
+    const html = await client.get(`/pt-br/resultado/${s.uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${fallbackUrl.replace('/resultado/', '/pt-br/resultado/')}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${fallbackUrl.replace('/resultado/', '/pt-br/resultado/')}/card.svg">`));
     assert.doesNotMatch(html.text, /evil\.example/);
   }
 });
@@ -264,12 +266,43 @@ test('proxy confiável mantém HTTPS e domínio público nos links e metadados',
     const url = `https://example.example/resultado/${s.uuid}`;
     const completed = await client.post(`/api/quiz/${s.uuid}/complete`).set(headers).set('X-Quiz-Token', s.token).send({ answers }).expect(200);
     assert.equal(completed.body.resultUrl, url);
-    const html = await client.get(`/resultado/${s.uuid}`).set(headers).expect(200);
-    assert.ok(html.text.includes(`<link rel="canonical" href="${url}">`));
-    assert.ok(html.text.includes(`<meta property="og:image" content="${url}/card.svg">`));
+    const html = await client.get(`/pt-br/resultado/${s.uuid}`).set(headers).expect(200);
+    assert.ok(html.text.includes(`<link rel="canonical" href="${url.replace('/resultado/', '/pt-br/resultado/')}">`));
+    assert.ok(html.text.includes(`<meta property="og:image" content="${url.replace('/resultado/', '/pt-br/resultado/')}/card.svg">`));
     const unknown = await client.get(`/api/quiz/${s.uuid}`).set({ ...headers, 'X-Forwarded-Host': 'evil.example' }).set('X-Quiz-Token', s.token).expect(200);
     assert.equal(unknown.body.resultUrl, `http://localhost:3000/resultado/${s.uuid}`);
   } finally {
     app.set('trust proxy', false);
   }
+});
+
+test('i18n: acesso direto, compatibilidade, queries e API nos quatro idiomas', async () => {
+  const versions = [['pt-BR','pt-br'],['en','en'],['es','es'],['zh-CN','zh-cn']];
+  for (const [locale,prefix] of versions) {
+    for (const path of ['/', '/metodologia','/sobre','/privacidade','/perguntas-frequentes','/quiz','/admin/login']) {
+      const response = await client.get(`/${prefix}${path}`).set('Accept-Language','fr').expect(200);
+      assert.equal(response.headers['content-language'],locale);
+      assert.ok(response.text.includes(`lang="${locale}"`));
+      assert.doesNotMatch(response.text, /<!--(?:PAGE_|HOME_FAQ|RESULT_|I18N_DATA)/);
+    }
+    const catalogue = await client.get('/api/quiz/questions').set('X-Language',locale).expect(200);
+    assert.equal(catalogue.body.questions.length,40);
+    assert.equal(catalogue.body.questions[0].id,1);
+    const invalid = await client.get('/api/results/1').set('X-Language',locale).expect(400);
+    assert.equal(invalid.body.code,'uuid');
+    const html = await client.get(`/${prefix}/resultado/${sessions[1].uuid}`).expect(200);
+    assert.match(html.headers['x-robots-tag'],/noindex/);
+    const translated = await client.get(`/api/results/${sessions[1].uuid}`).set('X-Language',locale).expect(200);
+    assert.equal(translated.body.economicScore,100);
+    assert.equal(translated.body.authorityScore,-100);
+    assert.equal(translated.body.labelKeys.political,'rightLibertarian');
+    assert.equal(translated.body.answers,undefined);
+  }
+  await client.get('/sobre?from=old').set('Accept-Language','en-US').expect(302).expect('Location','/en/sobre?from=old');
+  await client.get('/sobre?from=old').set('Accept-Language','en-US').set('Cookie','prisma_language=es').expect(302).expect('Location','/es/sobre?from=old');
+  await client.get('/en?from=old').expect(308).expect('Location','/en/?from=old');
+  await client.get('/en/').set('Accept-Language','pt-BR').expect(200);
+  const root = await client.get('/').expect(200);
+  assert.match(root.text,/href="\/en\/"/);
+  assert.equal((await prisma.quizSession.findUnique({where:{uuid:sessions[1].uuid}})).politicalLabel,'Direita Libertária');
 });

@@ -3,92 +3,118 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { api } from './routes/api.js';
-import { sameOrigin, requireAdmin } from './middlewares/security.js';
 import { prisma } from './services/database.js';
-import { getResult } from './services/quiz.js';
-import { validateUuid } from './utils/validation.js';
 import { escapeHtml } from './utils/html.js';
-import { getAppUrl } from './utils/app-url.js';
-import { pageMetadata, robotsTxt, sitemapXml } from './utils/seo.js';
-import { sitePages, renderFaq } from './data/site-pages.js';
+
+import { robotsTxt, sitemapXml, alternateLinks } from './utils/seo.js';
+import { sameOrigin } from './middlewares/security.js';
+import { pages } from './routes/pages.js';
+import { locales, chooseLocale, requestLocale, localizedPath, t, translateError, localizeResult, resources, renderTemplate } from './services/i18n.js';
 
 const frontend = fileURLToPath(new URL('../../frontend/', import.meta.url));
-// Templates e conteúdo editorial não dependem de banco e não precisam ser
-// relidos do disco a cada visita. O resultado pessoal continua vindo do banco.
-const [homeTemplate, infoTemplate, resultTemplate] = await Promise.all(['index.html', 'info.html', 'resultado.html'].map(file => readFile(`${frontend}/${file}`, 'utf8')));
-const templates = { 'index.html': homeTemplate, 'info.html': infoTemplate, 'resultado.html': resultTemplate };
-const getTemplate = file => config.production ? Promise.resolve(templates[file]) : readFile(`${frontend}/${file}`, 'utf8');
 export const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', config.trustProxy);
 app.use((req, res, next) => {
   res.locals.cspNonce = randomBytes(18).toString('base64');
-  if (!config.seoIndexingEnabled || /^\/(?:api|admin|health|resultado)(?:\/|$)/.test(req.path)) res.set('X-Robots-Tag', 'noindex, follow');
+  req.locale = requestLocale(req);
+  if (!config.seoIndexingEnabled || /^\/(?:api|health)(?:\/|$)/.test(req.path) || /\/(?:admin|resultado|quiz)(?:\/|$)/.test(req.path)) res.set('X-Robots-Tag', 'noindex, follow');
   next();
 });
 app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`], styleSrc: ["'self'"], imgSrc: ["'self'", 'data:'], connectSrc: ["'self'"], fontSrc: ["'self'"], objectSrc: ["'none'"], baseUri: ["'self'"], frameAncestors: ["'none'"], upgradeInsecureRequests: config.production ? [] : null } }, strictTransportSecurity: config.production ? undefined : false }));
 // Compressão só de conteúdo público; respostas com cookies administrativos
 // ou tokens de edição não participam da compressão.
-app.use(compression({ filter: (req, res) => !/^\/(?:api|admin)(?:\/|$)/.test(req.originalUrl.split('?')[0]) && compression.filter(req, res) }));
+app.use(compression({ filter: (req, res) => !/\/(?:api|admin)(?:\/|$)/.test(req.originalUrl.split('?')[0]) && compression.filter(req, res) }));
 app.use(express.json({ limit: '16kb' }));
 app.use(cookieParser());
+// Localização na borda da API: contratos, IDs, filtros e persistência intactos.
+app.use('/api', (req, res, next) => {
+  const json = res.json.bind(res);
+  res.json = body => {
+    let value = body;
+    if (body?.error && !body.code) {
+      const error = translateError(body.error, req.locale);
+      value = { ...body, error: error.message, code: error.code, ...(error.params ? { params: error.params } : {}) };
+    } else if (body?.questions) {
+      value = { ...body, questions: body.questions.map(question => ({ ...question, text: t(req.locale,`quiz.questions.${question.id}`), topic: t(req.locale, question.id <= 20 ? 'quiz.topicEconomic' : 'quiz.topicAuthority') })) };
+    } else if (body?.economicLabel) value = localizeResult(body, req.locale);
+    else if (Array.isArray(body?.data)) value = { ...body, data: body.data.map(item => item.economicLabel ? localizeResult(item, req.locale) : item) };
+    else if (body?.economic && body?.authority && body?.political) {
+      const localLabel = (label, axis) => {
+        const source = resources['pt-BR'].results[axis];
+        const key = Array.isArray(source) ? source.indexOf(label) : Object.keys(source).find(key => source[key] === label);
+        return key !== undefined && key !== -1 ? t(req.locale,`results.${axis}.${key}`) : label;
+      };
+      value = Object.fromEntries(['economic','authority','political'].map(axis => [axis,body[axis].map(item => {
+        const source = resources['pt-BR'].results[axis];
+        const labelKey = Array.isArray(source) ? source.indexOf(item.label) : Object.keys(source).find(key => source[key] === item.label);
+        return { ...item, labelKey, label: localLabel(item.label,axis) };
+      })]));
+    }
+    if (value?.resultUrl && req.get('X-Language')) value = { ...value, resultUrl: value.resultUrl.replace(/(https?:\/\/[^/]+)(\/resultado\/[^]*)/, (match,origin,path) => origin + localizedPath(path,req.locale)) };
+    res.set('Content-Language',req.locale);
+    return json(value);
+  };
+  next();
+});
 app.use(sameOrigin);
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, api);
 app.get('/health', async (req, res) => {
   await prisma.$queryRaw`SELECT 1`;
   res.json({ status: 'ok' });
 });
-for (const asset of ['css', 'js', 'assets']) app.use(`/${asset}`, express.static(`${frontend}/${asset}`, { maxAge: config.production ? '1h' : 0, index: false }));
+for (const asset of ['css', 'js', 'assets', 'locales']) app.use(`/${asset}`, express.static(`${frontend}/${asset}`, { maxAge: config.production ? '1h' : 0, index: false }));
 app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=300').send(robotsTxt()));
 app.get('/sitemap.xml', (req, res) => {
   if (!config.seoIndexingEnabled) return res.status(404).set('X-Robots-Tag', 'noindex').send('Sitemap desativado neste ambiente.');
   res.type('application/xml').set('Cache-Control', 'public, max-age=300').send(sitemapXml());
 });
-app.get(['/index.html', '/index.htm'], (req, res) => res.redirect(301, '/'));
-app.get('/', async (req, res) => {
-  const html = (await getTemplate('index.html')).replace('<!--PAGE_META-->', pageMetadata(sitePages[0], res.locals.cspNonce)).replace('<!--HOME_FAQ-->', renderFaq(4)).replace('<!--ABANDONMENT_MINUTES-->', config.abandonmentMinutes);
-  res.set('Content-Language', 'pt-BR').set('Cache-Control', 'no-cache').type('html').send(html);
+// A raiz é estável para crawlers e oferece links de seleção sem JavaScript.
+// No navegador, i18n.js encaminha pela preferência manual ou navigator.languages.
+app.get('/', (req, res) => {
+  const nonce = res.locals.cspNonce;
+  const title = t('pt-BR', 'messages.selectorTitle');
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} | Prisma</title><meta name="description" content="${t('pt-BR','messages.selectorDescription')}"><meta name="robots" content="${config.seoIndexingEnabled ? 'index, follow' : 'noindex, follow'}"><link rel="canonical" href="${config.seoUrl}/">${alternateLinks('/')}<link rel="stylesheet" href="/css/style.css?v=4"><script type="module" src="/js/i18n.js?v=4"></script><!--I18N_DATA--></head><body><main class="language-welcome wrap"><a class="brand" href="/pt-br/">prisma</a><h1>${title}</h1><p>${t('pt-BR','messages.selectorDescription')}</p>${locales.map(locale => `<a class="button button-outline" data-language="${locale.code}" lang="${locale.code}" href="${localizedPath('/',locale.code)}">${locale.name}</a>`).join('')}</main></body></html>`;
+  res.set('Cache-Control','no-cache').type('html').send(renderTemplate(html,'pt-BR','/',nonce));
 });
-for (const page of sitePages.slice(1)) {
-  app.get(`${page.path}/`, (req, res, next) => req.path.endsWith('/') ? res.redirect(301, page.path) : next());
-  app.get(page.path, async (req, res) => {
-    const html = (await getTemplate('info.html')).replace('<!--PAGE_META-->', pageMetadata(page, res.locals.cspNonce)).replace('<!--PAGE_BREADCRUMB-->', escapeHtml(page.heading)).replace('<!--PAGE_EYEBROW-->', escapeHtml(page.eyebrow)).replace('<!--PAGE_HEADING-->', escapeHtml(page.heading)).replace('<!--PAGE_INTRODUCTION-->', escapeHtml(page.introduction)).replace('<!--PAGE_CONTENT-->', page.content);
-    res.set('Content-Language', 'pt-BR').set('Cache-Control', 'no-cache').type('html').send(html);
+for (const locale of locales) {
+  app.get(`/${locale.prefix}`, (req, res, next) => {
+    if (req.path.endsWith('/')) return next();
+    res.redirect(308, `/${locale.prefix}/${req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : ''}`);
   });
+  app.use(`/${locale.prefix}`, (req, res, next) => {
+    req.locale = locale.code;
+    if (req.path.length > 1 && req.path.endsWith('/')) return res.redirect(308, req.originalUrl.replace(/\/(?=\?|$)/, ''));
+    next();
+  }, pages);
 }
-app.get('/admin/login', (req, res) => { res.set('Cache-Control', 'no-store').sendFile(`${frontend}/admin-login.html`); });
-app.get('/admin', (req, res, next) => requireAdmin(req, res, error => {
-  if (error?.status === 401) return res.redirect('/admin/login');
-  if (error) return next(error);
-  res.set('Cache-Control', 'no-store').sendFile(`${frontend}/admin.html`);
-}));
-app.get('/resultado/:uuid', async (req, res) => {
-  const result = await getResult(validateUuid(req.params.uuid));
-  const appUrl = getAppUrl(req);
-  const url = `${appUrl}/resultado/${result.uuid}`;
-  const title = `Meu resultado: ${result.politicalLabel} | Prisma`;
-  const description = `Visão econômica: ${result.economicView.label} (${result.economicScore > 0 ? '+' : ''}${result.economicScore}). Visão de autoridade: ${result.authorityView.label} (${result.authorityScore > 0 ? '+' : ''}${result.authorityScore}). Duas dimensões do mesmo resultado.`;
-  const metadata = `<title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="robots" content="noindex, follow"><meta property="og:site_name" content="Prisma"><meta property="og:locale" content="pt_BR"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${escapeHtml(url)}"><meta property="og:image" content="${escapeHtml(appUrl)}/resultado/${result.uuid}/card.svg"><meta name="twitter:card" content="summary"><link rel="canonical" href="${escapeHtml(url)}">`;
-  res.set('Content-Language', 'pt-BR').set('Cache-Control', 'no-store').send((await getTemplate('resultado.html')).replace('<!--RESULT_META-->', metadata).replace('<!--RESULT_FALLBACK-->', `<noscript><h1>${escapeHtml(result.politicalLabel)}</h1><h2>Visão econômica</h2><dl><dt>Pontuação econômica</dt><dd>${result.economicScore}</dd><dt>Classificação econômica</dt><dd>${escapeHtml(result.economicLabel)}</dd></dl><h2>Visão de autoridade</h2><dl><dt>Pontuação de autoridade</dt><dd>${result.authorityScore}</dd><dt>Classificação de autoridade</dt><dd>${escapeHtml(result.authorityLabel)}</dd></dl><p>Ative JavaScript para ver o gráfico e compartilhar.</p></noscript>`));
+// Compatibilidade: negociação somente nas URLs antigas sem prefixo.
+app.get(['/index.html','/index.htm','/quiz','/metodologia','/sobre','/privacidade','/perguntas-frequentes','/admin','/admin/login','/resultado/:uuid','/resultado/:uuid/card.svg'], (req, res) => {
+  const languages = (req.get('Accept-Language') || '').split(',').map(value => value.split(';')[0]);
+  const locale = chooseLocale({ saved: req.cookies.prisma_language, languages });
+  const path = /^\/index\./.test(req.path) ? `/${req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : ''}` : req.originalUrl;
+  res.set('Vary','Accept-Language, Cookie').set('Cache-Control','no-store').redirect(302, localizedPath(path,locale));
 });
-app.get('/resultado/:uuid/card.svg', async (req, res) => {
-  const result = await getResult(validateUuid(req.params.uuid));
-  const label = escapeHtml(result.politicalLabel);
-  const economicScore = `${result.economicScore > 0 ? '+' : ''}${result.economicScore}`;
-  const authorityScore = `${result.authorityScore > 0 ? '+' : ''}${result.authorityScore}`;
-  res.type('image/svg+xml').send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><defs><radialGradient id="g"><stop stop-color="#423375"/><stop offset="1" stop-color="#101018"/></radialGradient></defs><rect width="1200" height="630" fill="url(#g)"/><rect x="65" y="65" width="1070" height="500" rx="28" fill="#15151f" stroke="#55506b"/><rect x="105" y="285" width="480" height="190" rx="16" fill="#211c2c" stroke="#40364f"/><rect x="615" y="285" width="480" height="190" rx="16" fill="#211c2c" stroke="#40364f"/><g font-family="system-ui,sans-serif" fill="#f5f2ff"><text x="110" y="145" font-size="27" fill="#b8a5f2">PRISMA / SEU RESULTADO</text><text x="110" y="235" font-size="60" font-weight="700">${label}</text><text x="130" y="325" font-size="19" fill="#b8a5f2">VISÃO ECONÔMICA</text><text x="130" y="378" font-size="30">${escapeHtml(result.economicLabel)}</text><text x="130" y="441" font-size="44" fill="#d5bcfb">${economicScore}</text><text x="640" y="325" font-size="19" fill="#b8a5f2">VISÃO DE AUTORIDADE</text><text x="640" y="378" font-size="30">${escapeHtml(result.authorityLabel)}</text><text x="640" y="441" font-size="44" fill="#d5bcfb">${authorityScore}</text><text x="110" y="530" font-size="23" fill="#b8b6c6">40 perguntas. Dois eixos. Uma nova perspectiva.</text></g></svg>`);
+function errorPage(req, res, status, message) {
+  const locale = req.locale || 'pt-BR';
+  res.status(status).set('X-Robots-Tag','noindex').set('Content-Language',locale).type('html').send(`<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Prisma — ${escapeHtml(message)}</title></head><body><h1>${escapeHtml(message)}</h1><a href="${localizedPath('/',locale)}">${escapeHtml(t(locale,'messages.back'))}</a></body></html>`);
+}
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: t('pt-BR','messages.notFound') });
+  errorPage(req,res,404,t(req.locale,'messages.notFound'));
 });
-app.use((req, res) => res.set('X-Robots-Tag', 'noindex').status(404).format({ json: () => res.json({ error: 'Página não encontrada.' }), html: () => res.type('html').send('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Página não encontrada</title><body><h1>Página não encontrada</h1><a href="/">Voltar ao Prisma</a></body></html>'), default: () => res.send('Não encontrado.') }));
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   const status = error.status || (error.type === 'entity.parse.failed' ? 400 : 500);
   res.set('X-Robots-Tag', 'noindex');
   if (status >= 500) console.error('Erro da aplicação:', error.code || error.name);
-  const message = status >= 500 ? 'Não foi possível processar sua solicitação. Tente novamente.' : error.message;
-  if (req.path.startsWith('/api/') || req.path === '/health') return res.status(status).json({ error: message });
-  res.status(status).type('html').send(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prisma — aviso</title><body><h1>${escapeHtml(message)}</h1><a href="/">Voltar ao início</a></body></html>`);
+  const message = status >= 500 ? t('pt-BR','messages.server') : error.message;
+  if (req.path.startsWith('/api/') || req.path === '/health') {
+    const translated = translateError(message, req.locale);
+    return res.status(status).json({ error: translated.message, code: translated.code, ...(translated.params ? { params: translated.params } : {}) });
+  }
+  errorPage(req,res,status,translateError(message,req.locale).message);
 });

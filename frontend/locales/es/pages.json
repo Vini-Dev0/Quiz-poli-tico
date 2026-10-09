@@ -1,0 +1,197 @@
+{
+  "home": {
+    "title": "Quiz político: descubre tu orientación | Prisma",
+    "description": "Descubre tu orientación política con un quiz gratuito y anónimo de 40 preguntas. Consulta tus puntuaciones en economía y autoridad y comparte el resultado."
+  },
+  "methodology": {
+    "title": "Cómo se calcula el resultado del test político | Prisma",
+    "heading": "Cómo calcula el quiz tu resultado",
+    "eyebrow": "METODOLOGÍA ABIERTA",
+    "description": "Conoce la metodología de Prisma: 40 preguntas, respuestas de 1 a 5, dos ejes independientes y puntuaciones de −100 a +100. Entiende los límites del test.",
+    "introduction": "Dos valores calculados por separado a partir de tus respuestas. Aquí encontrarás la escala, la fórmula y los límites de la herramienta.",
+    "sections": [
+      {
+        "heading": "Las 40 afirmaciones y la escala de respuestas",
+        "paragraphs": [
+          "El cuestionario actual tiene 40 afirmaciones: 20 contribuyen al eje económico y 20 al eje de autoridad. Cada afirmación tiene una dirección y un peso definidos en el catálogo del quiz. En esta versión, todos los pesos son 1."
+        ]
+      },
+      {
+        "heading": "Dos ejes independientes",
+        "paragraphs": [
+          "El eje económico va de −100 a +100, con izquierda y derecha en los extremos. El eje de autoridad usa la misma escala, de libertario a autoritario. El cero es el centro de cada escala.",
+          "Una respuesta económica contribuye solo a la puntuación económica. Una respuesta de autoridad contribuye solo a la puntuación de autoridad. El valor de un eje no determina el del otro."
+        ]
+      },
+      {
+        "heading": "La fórmula del resultado",
+        "paragraphs": [
+          "Para cada afirmación, el sistema multiplica la respuesta convertida por la dirección y el peso. Después suma las contribuciones de un eje y divide por la mayor suma absoluta posible en ese eje.",
+          "El valor final se limita al intervalo de −100 a +100 y se redondea a dos decimales. Si todas las respuestas son neutrales, ambas puntuaciones son cero. El servidor calcula y guarda el resultado oficial solo después de validar las 40 respuestas."
+        ]
+      },
+      {
+        "heading": "Cómo se asignan las clasificaciones",
+        "paragraphs": [
+          "Los nombres siguientes identifican intervalos de la escala de este quiz. La tabla usa las mismas clasificaciones que el cálculo oficial.",
+          "La clasificación conjunta combina ambos ejes. En esta metodología, los valores entre −10 y +10 se consideran centrales."
+        ]
+      },
+      {
+        "heading": "Qué puede decirte este test",
+        "paragraphs": [
+          "El resultado resume tus respuestas según estas reglas. El catálogo se propuso para este proyecto y no tiene validación psicométrica. No es un diagnóstico, una encuesta representativa de la población ni una recomendación sobre candidatos, partidos o voto.",
+          "La clasificación no sustituye tu propia descripción y puede cambiar si respondes de otra manera en una nueva participación."
+        ]
+      }
+    ],
+    "scale": [
+      "Totalmente en desacuerdo: respuesta 1, convertida en −2.",
+      "En desacuerdo: respuesta 2, convertida en −1.",
+      "Neutral / depende: respuesta 3, convertida en 0.",
+      "De acuerdo: respuesta 4, convertida en +1.",
+      "Totalmente de acuerdo: respuesta 5, convertida en +2."
+    ],
+    "formula": "contribución = (respuesta − 3) × dirección × peso\nmáximo = suma de (2 × dirección absoluta × peso)\npuntuación = 100 × suma de contribuciones / máximo",
+    "table": {
+      "aria": "Intervalos de clasificación de ambos ejes",
+      "caption": "Intervalos de puntuación económica y de autoridad",
+      "score": "Puntuación",
+      "economic": "Economía",
+      "authority": "Autoridad",
+      "value": "valor"
+    }
+  },
+  "about": {
+    "title": "Sobre Prisma: quiz político en dos ejes",
+    "heading": "Un quiz para explorar tus respuestas",
+    "eyebrow": "SOBRE PRISMA",
+    "description": "Conoce Prisma, un quiz gratuito de orientación política sin registro. Descubre qué representa el resultado, sus límites y cómo funciona el sitio.",
+    "introduction": "Prisma organiza tus respuestas en una perspectiva económica y una de autoridad. El objetivo es facilitar esta lectura, con la metodología a la vista.",
+    "sections": [
+      {
+        "heading": "Qué encontrarás en el sitio",
+        "paragraphs": [
+          "Un cuestionario de 40 afirmaciones, una pregunta por vez y cinco opciones de respuesta. Al terminar, recibes dos puntuaciones, clasificaciones separadas, un mapa y un enlace para compartir el resultado.",
+          "El test es gratuito y no necesitas crear una cuenta. La participación se identifica mediante una sesión aleatoria, sin pedir nombre, correo ni teléfono."
+        ]
+      },
+      {
+        "heading": "Transparencia sobre el resultado",
+        "paragraphs": [
+          "Las puntuaciones se calculan en el servidor a partir de tus respuestas. La [[/metodologia|página de metodología]] explica la conversión, la normalización y los intervalos del quiz.",
+          "No presentamos la herramienta como un test científico validado. Es exploratoria y usa afirmaciones propuestas para este proyecto. Sus valores no son una definición definitiva de quién eres."
+        ]
+      },
+      {
+        "heading": "Dos ejes, dos lecturas",
+        "paragraphs": [
+          "El sitio calcula economía y autoridad de forma independiente. En la pantalla de resultado, cada dimensión tiene su propia tarjeta, valor numérico y clasificación. El gráfico muestra ambos valores juntos."
+        ]
+      },
+      {
+        "heading": "Información antes de participar",
+        "paragraphs": [
+          "Lee las [[/perguntas-frequentes|preguntas frecuentes]] para conocer el recorrido del quiz y la [[/privacidade|página de privacidad]] para saber qué información registra la aplicación."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Privacidad y datos del quiz político | Prisma",
+    "heading": "Qué datos usa el quiz",
+    "eyebrow": "PRIVACIDAD",
+    "description": "Conoce qué registra Prisma: respuestas, progreso y resultado, sin registro ni datos personales obligatorios. Entiende el enlace público y el uso al compartir.",
+    "introduction": "Puedes participar sin dar datos personales. Esta página describe los registros necesarios para que funcione el quiz y lo que aparece en el enlace del resultado.",
+    "sections": [
+      {
+        "heading": "Información que no pedimos",
+        "paragraphs": [
+          "No exigimos nombre, correo, teléfono, identificación fiscal brasileña (CPF), contraseña personal ni dirección para responder al quiz. La contraseña administrativa solo la usa quien gestiona el panel."
+        ]
+      },
+      {
+        "heading": "Información registrada al participar",
+        "paragraphs": [
+          "La aplicación guarda las respuestas de 1 a 5, la pregunta actual, el estado de la sesión, las fechas de inicio, actividad y finalización y, al concluir, las puntuaciones y clasificaciones. Un identificador aleatorio se usa para la sesión y su resultado.",
+          "La clave para retomar y editar el quiz permanece en el almacenamiento de esta pestaña del navegador. El servidor guarda solo su hash. La aplicación usa temporalmente la IP en memoria para limitar solicitudes; no la guarda en la tabla de participantes."
+        ]
+      },
+      {
+        "heading": "Qué es público en el resultado",
+        "paragraphs": [
+          "Cualquier persona con la URL puede ver las puntuaciones y clasificaciones de ese resultado. La página pública no muestra las respuestas individuales, la clave de edición ni datos administrativos.",
+          "Las páginas de resultados personales incluyen una instrucción de no indexación para buscadores. Esto no hace privada la URL: sigue siendo accesible para quien la reciba."
+        ]
+      },
+      {
+        "heading": "El registro al compartir",
+        "paragraphs": [
+          "Al pulsar un botón para compartir, la aplicación registra la intención de compartir y la hora del primer registro. Varios clics siguen contando como un único resultado compartido.",
+          "El sitio no recibe confirmación de que se haya publicado y no identifica el perfil usado en la red social. Al abrir un servicio externo, sus reglas se aplican al uso de esa página."
+        ]
+      },
+      {
+        "heading": "Almacenamiento y acceso administrativo",
+        "paragraphs": [
+          "Los registros del quiz permanecen en la base de datos. Cerrar la pestaña termina el acceso local a la clave de continuación, pero no elimina el registro guardado. Esta versión no elimina automáticamente los resultados completados.",
+          "El panel está protegido por autenticación administrativa y muestra progreso, resultados y métricas. El sitio no instala cookies publicitarias ni carga fuentes, píxeles o servicios de análisis externos. La cookie de acceso administrativo es independiente de la participación en el quiz."
+        ]
+      }
+    ]
+  },
+  "faq": {
+    "title": "Preguntas frecuentes sobre el test político | Prisma",
+    "heading": "Resuelve tus dudas antes de empezar",
+    "eyebrow": "PREGUNTAS FRECUENTES",
+    "description": "Resuelve tus dudas sobre Prisma: gratuidad, registro, respuestas, cálculo, continuación, privacidad y uso compartido del resultado.",
+    "introduction": "Respuestas sobre cómo funciona el test, qué muestra y cómo puedes usar el resultado.",
+    "aria": "Dudas sobre el quiz",
+    "sections": [
+      {
+        "heading": "¿Quieres comprobar el cálculo?",
+        "paragraphs": [
+          "La [[/metodologia|metodología completa]] explica la escala de respuestas, la fórmula de normalización y los intervalos de clasificación. Los detalles de almacenamiento están en la [[/privacidade|página de privacidad]]."
+        ]
+      }
+    ]
+  },
+  "items": [
+    {
+      "question": "¿Cómo descubrir mi orientación política con este quiz?",
+      "answer": "Prisma organiza tus respuestas en dos ejes: economía y autoridad. Responde las 40 afirmaciones para ver tu posición en la escala del test, con puntuación y clasificación separadas para cada dimensión. El resultado es exploratorio, no una definición definitiva de tu identidad."
+    },
+    {
+      "question": "¿Cómo funciona el test de orientación política?",
+      "answer": "Respondes 40 afirmaciones, una por vez, eligiendo una opción de 1 a 5: de totalmente en desacuerdo a totalmente de acuerdo. Al terminar, Prisma muestra dos puntuaciones independientes, sus clasificaciones y un mapa en dos ejes."
+    },
+    {
+      "question": "¿El quiz es gratuito y hay que registrarse?",
+      "answer": "El quiz es gratuito y no requiere cuenta, nombre, correo ni teléfono. Puedes empezar directamente en la página inicial. El acceso administrativo es independiente y está protegido por contraseña."
+    },
+    {
+      "question": "¿Qué aparece en el resultado?",
+      "answer": "El resultado muestra la perspectiva económica y la de autoridad en tarjetas separadas. Cada una incluye una puntuación de −100 a +100, una clasificación y una escala visual. El mapa reúne ambos valores sin mezclar sus cálculos."
+    },
+    {
+      "question": "¿El test tiene validación científica?",
+      "answer": "No. Prisma es una herramienta exploratoria con afirmaciones propuestas para este proyecto, sin validación psicométrica. El resultado resume tus respuestas según la metodología del quiz; no determina tu identidad ni recomienda cómo votar."
+    },
+    {
+      "question": "¿Puedo revisar respuestas o continuar más tarde?",
+      "answer": "Antes de terminar, puedes volver a las preguntas y revisar tus respuestas. El progreso se guarda en el servidor y se identifica en esta pestaña del navegador. Tras {minutes} minutos sin actividad, una sesión incompleta se cuenta como abandonada, pero puede retomarse mientras la pestaña conserve su clave de acceso. Cerrar la pestaña termina ese acceso local."
+    },
+    {
+      "question": "¿Mi resultado y mis respuestas son públicos?",
+      "answer": "El enlace del resultado es público para quien lo reciba. La página solo muestra puntuaciones y clasificaciones, no las respuestas individuales. Los resultados personales llevan una instrucción para no aparecer en las búsquedas, pero esta no sustituye la protección por contraseña ni hace privado el enlace."
+    },
+    {
+      "question": "¿Cómo puedo compartir mi resultado?",
+      "answer": "Al terminar, puedes copiar el enlace, usar la opción del navegador o los botones de WhatsApp, Facebook, X y Telegram. Para Instagram, el sitio copia el contenido para que lo pegues. El sitio registra la intención mediante el clic, sin confirmar una publicación en la red social."
+    },
+    {
+      "question": "¿Puedo hacer el quiz otra vez?",
+      "answer": "Sí. El enlace para explorar el test de nuevo en la página del resultado lleva al inicio. Una nueva participación crea una nueva sesión. Un resultado completado no cambia con nuevas respuestas."
+    }
+  ]
+}

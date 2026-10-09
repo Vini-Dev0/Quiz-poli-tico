@@ -7,12 +7,13 @@ O objetivo da página inicial é atender às buscas **quiz político**, **quiz l
 - Título e descrição únicos por página, renderizados pelo Express.
 - Canonical da landing e páginas editoriais concentrado em `SEO_URL`, mesmo com múltiplas origens em `APP_URL`.
 - `WebSite`, `WebPage`/`AboutPage` e breadcrumbs em JSON-LD com nonce compatível com CSP. Sem avaliações fictícias, FAQ rich result ou caixa de busca inexistente.
-- Cinco URLs editoriais em `/sitemap.xml`; nenhum UUID, resultado de participante ou página administrativa é incluído.
+- Vinte URLs editoriais em `/sitemap.xml` (cinco páginas nos quatro idiomas), com referências multilíngues; nenhum UUID, resultado de participante ou página administrativa é incluído.
+- Conteúdo, metadados e JSON-LD localizados, canonical próprio em cada idioma, hreflang recíproco `pt-BR`, `en`, `es`, `zh-Hans` e `x-default`. A raiz é uma seleção de idiomas; veja o [guia de internacionalização](I18N.md).
 - `/robots.txt` permite HTML, CSS, JavaScript e imagens públicas. Os resultados podem ser rastreados para que o buscador leia seu `noindex`.
 - Resultados, APIs, administração e erros recebem `X-Robots-Tag: noindex`. Resultados continuam funcionando por link e com Open Graph personalizado.
 - Open Graph/Twitter nas páginas públicas, preview PNG 1200×630 e ícones locais.
 - HTML e assets públicos comprimidos, templates em memória, fontes do sistema, dimensões definidas nos ícones e layout responsivo. Sem biblioteca frontend ou serviço de tracking novo.
-- Redirecionamento permanente de `/index.html` e normalização da barra final nas páginas editoriais. URLs inexistentes continuam respondendo 404.
+- URLs antigas redirecionam temporariamente para o idioma preferido; os prefixos e barras finais são normalizados sem ciclos. URLs inexistentes continuam respondendo 404.
 - Indexação desligada em desenvolvimento e configurável na homologação.
 
 ## Publicar no EasyPanel
@@ -39,7 +40,7 @@ Após o deploy, confira as páginas públicas e rode na pasta `backend`:
 npm run seo:check -- https://ladopolitico.online
 ```
 
-Esse comando verifica a aplicação publicada, sem senha administrativa ou acesso ao banco. Ele não consulta posição em buscadores.
+Esse comando verifica as 20 páginas, canonical, hreflang, sitemap e previews da aplicação publicada, sem senha administrativa ou acesso ao banco. Ele não consulta posição em buscadores nem comprova que o Googlebot real conseguiu acessar a VPS.
 
 ## Fazer o Google encontrar e medir o site
 
@@ -62,7 +63,7 @@ SEO técnico prepara o site para ser entendido e rastreado. Ele não garante pri
 
 ## Manutenção
 
-O conteúdo centralizado fica em `backend/src/data/site-pages.js`. O sitemap usa a mesma lista das rotas; ao adicionar uma página pública nesse catálogo, ela ganha rota e entrada no sitemap. A landing está em `frontend/index.html`; as páginas editoriais usam `frontend/info.html` e `frontend/css/info.css`.
+As definições de páginas ficam em `backend/src/data/site-pages.js`, com os textos em `frontend/locales/<idioma>/pages.json`. O sitemap usa a mesma lista das rotas e o registro compartilhado de idiomas; ao adicionar uma página pública nesse catálogo e traduzi-la nos quatro recursos, ela ganha rota e entradas multilíngues no sitemap. A landing está em `frontend/index.html`; as páginas editoriais usam `frontend/info.html` e `frontend/css/info.css`.
 
 Ao modificar o layout do preview SVG ou do ícone, regenere os PNGs com dependências de desenvolvimento instaladas:
 

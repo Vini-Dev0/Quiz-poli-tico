@@ -8,7 +8,7 @@ test('quiz completo, retomada, resultado público, compartilhamento e dashboard 
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1050 });
-  await page.goto('/');
+  await page.goto('/pt-br/');
   await expect(page.getByRole('heading', { name: 'Descubra seu lado político.' })).toBeVisible();
   await page.screenshot({ path: '../test-results/landing-desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Descobrir meu lado político' }).click();
@@ -18,7 +18,6 @@ test('quiz completo, retomada, resultado público, compartilhamento e dashboard 
   await page.locator('#next-question').click();
   await expect(page.locator('#question-kicker')).toHaveText('PERGUNTA 02');
   await page.reload();
-  await page.locator('[data-start]').last().click();
   await expect(page.locator('#question-kicker')).toHaveText('PERGUNTA 02');
   await page.locator('#previous-question').click();
   await page.locator('.answer-option').nth(4).click();
@@ -52,11 +51,11 @@ test('quiz completo, retomada, resultado público, compartilhamento e dashboard 
   await expect(page.locator('#political-label')).toHaveText('Centro');
   const resultHtml = await page.request.get(resultUrl);
   expect(await resultHtml.text()).toContain('Meu resultado: Centro');
-  await page.goto('/admin');
-  await expect(page).toHaveURL(/\/admin\/login$/);
+  await page.goto('/pt-br/admin');
+  await expect(page).toHaveURL(/\/pt-br\/admin\/login$/);
   await page.locator('#admin-password').fill('browser-test-password');
   await page.locator('#login-button').click();
-  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page).toHaveURL(/\/pt-br\/admin$/);
   await expect(page.locator('#metric-completed')).toHaveText('1');
   await expect(page.locator('#metric-shared')).toHaveText('1');
   await expect(page.locator('#rate-share')).toHaveText('100,00%');
@@ -68,7 +67,7 @@ test('quiz completo, retomada, resultado público, compartilhamento e dashboard 
   await page.locator('#reset-filters').click();
   await expect(page.locator('#metric-completed')).toHaveText('1');
   await page.locator('#logout').click();
-  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page).toHaveURL(/\/pt-br\/admin\/login$/);
   expect(errors).toEqual([]);
 });
 
@@ -77,7 +76,7 @@ test('mobile sem overflow, quiz acessível e resultado responsivo', async ({ pag
   const mobileSession = await started.json();
   await page.request.post(`/api/quiz/${mobileSession.uuid}/complete`, { headers: { 'X-Quiz-Token': mobileSession.token }, data: { answers: Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, 3])) } });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await page.goto('/pt-br/');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '../test-results/landing-mobile.png', fullPage: true });
   await page.getByRole('button', { name: 'Descobrir meu lado político' }).click();
@@ -86,13 +85,13 @@ test('mobile sem overflow, quiz acessível e resultado responsivo', async ({ pag
   await page.locator('.answer-option').nth(3).click();
   await expect(page.locator('#next-question')).toBeEnabled();
   await page.screenshot({ path: '../test-results/quiz-mobile.png', fullPage: true });
-  await page.goto(`/resultado/${mobileSession.uuid}`);
+  await page.goto(`/pt-br/resultado/${mobileSession.uuid}`);
   await expect(page.locator('#political-label')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Visão econômica', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Visão de autoridade', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '../test-results/result-mobile.png', fullPage: true });
-  await page.goto('/admin/login');
+  await page.goto('/pt-br/admin/login');
   await page.locator('#admin-password').fill('browser-test-password');
   await page.locator('#login-button').click();
   await expect(page.locator('#metric-completed')).not.toHaveText('—');
@@ -101,7 +100,7 @@ test('mobile sem overflow, quiz acessível e resultado responsivo', async ({ pag
 });
 
 test('falha ao salvar mantém resposta e permite reenviar sem avançar', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/pt-br/');
   await page.getByRole('button', { name: 'Descobrir meu lado político' }).click();
   await expect(page.locator('#question-kicker')).toHaveText('PERGUNTA 01');
   await page.route('**/api/quiz/*/progress', route => route.abort('failed'));
@@ -122,7 +121,7 @@ test('falha ao salvar mantém resposta e permite reenviar sem avançar', async (
 
 test('duas URLs reais preservam links e permitem quiz, compartilhamento e administração', async ({ page, context }) => {
   for (const origin of ['http://localhost:3001', 'http://127.0.0.1:3001']) {
-    await page.goto(origin);
+    await page.goto(`${origin}/pt-br/`);
     const startedResponse = page.waitForResponse(response => response.url() === `${origin}/api/quiz/start` && response.status() === 201);
     await page.getByRole('button', { name: 'Descobrir meu lado político' }).click();
     const { uuid, token } = await (await startedResponse).json();
@@ -134,8 +133,8 @@ test('duas URLs reais preservam links e permitem quiz, compartilhamento e admini
       data: { answers: Object.fromEntries(Array.from({ length: 40 }, (_, i) => [i + 1, 3])) }
     });
     expect(completed.ok()).toBe(true);
-    const url = `${origin}/resultado/${uuid}`;
-    expect((await completed.json()).resultUrl).toBe(url);
+    const url = `${origin}/pt-br/resultado/${uuid}`;
+    expect((await completed.json()).resultUrl).toBe(`${origin}/resultado/${uuid}`);
     await page.goto(url);
     await expect(page.locator('#result-url')).toHaveValue(url);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', url);
@@ -145,14 +144,14 @@ test('duas URLs reais preservam links e permitem quiz, compartilhamento e admini
     await expect(page.locator('.toast')).toContainText('Link copiado');
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(url);
     await expect.poll(async () => (await db.quizSession.findUnique({ where: { uuid } })).shared).toBe(true);
-    await page.goto(`${origin}/admin`);
-    await expect(page).toHaveURL(`${origin}/admin/login`);
+    await page.goto(`${origin}/pt-br/admin`);
+    await expect(page).toHaveURL(`${origin}/pt-br/admin/login`);
     await page.locator('#admin-password').fill('browser-test-password');
     await page.locator('#login-button').click();
-    await expect(page).toHaveURL(`${origin}/admin`);
+    await expect(page).toHaveURL(`${origin}/pt-br/admin`);
     await expect(page.locator('#metric-completed')).not.toHaveText('—');
     await page.locator('#logout').click();
-    await expect(page).toHaveURL(`${origin}/admin/login`);
+    await expect(page).toHaveURL(`${origin}/pt-br/admin/login`);
   }
 });
 
@@ -160,7 +159,7 @@ test('conteúdo editorial é legível sem JavaScript e cabe no celular', async (
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   try {
     const page = await context.newPage();
-    await page.goto('http://localhost:3001/');
+    await page.goto('http://localhost:3001/pt-br/');
     await expect(page.getByRole('heading', { name: 'Descubra seu lado político.' })).toBeVisible();
     await expect(page.locator('h1')).toHaveCount(1);
     await page.getByText('Como descobrir meu lado político com este quiz?', { exact: true }).click();
@@ -172,7 +171,7 @@ test('conteúdo editorial é legível sem JavaScript e cabe no celular', async (
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: '../test-results/methodology-mobile.png', fullPage: true });
     for (const path of ['/sobre', '/privacidade', '/perguntas-frequentes']) {
-      await page.goto(`http://localhost:3001${path}`);
+      await page.goto(`http://localhost:3001/pt-br${path}`);
       await expect(page.locator('h1')).toHaveCount(1);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

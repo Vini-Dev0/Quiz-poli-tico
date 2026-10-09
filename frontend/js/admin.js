@@ -1,4 +1,6 @@
-import { api, setText, signed } from './common.js';
+import { api, setError, setText, signed } from './common.js?v=4';
+import { t, ready, language, localPath } from './i18n.js?v=4';
+await ready;
 const login = document.getElementById('login-form');
 if (login) {
   login.addEventListener('submit', async event => {
@@ -7,14 +9,14 @@ if (login) {
     document.getElementById('login-error').hidden = true;
     try {
       await api('/admin/login', { method: 'POST', body: JSON.stringify({ password: document.getElementById('admin-password').value }) });
-      location.replace('/admin');
-    } catch (error) { setText('login-error', error.message); document.getElementById('login-error').hidden = false; }
+      location.replace(localPath('/admin'));
+    } catch (error) { setError('login-error', error); document.getElementById('login-error').hidden = false; }
     finally { document.getElementById('login-button').disabled = false; }
   });
 } else {
   const form = document.getElementById('filter-form');
-  const formatter = new Intl.NumberFormat('pt-BR');
-  const percent = value => `${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  const formatter = { format: value => new Intl.NumberFormat(language()).format(value) };
+  const percent = value => `${Number(value).toLocaleString(language(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
   let page = 1;
   let pointsPage = 1;
   let points = [];
@@ -25,6 +27,10 @@ if (login) {
   let tableBusy = false;
   let pointsBusy = false;
   let lastTable;
+  let lastStats;
+  let lastDistribution;
+  let updatedAt;
+  const labels = (items, axis) => items.map(item => ({ ...item, label: item.labelKey !== undefined ? t(`results.${axis}.${item.labelKey}`) : item.label }));
   function filters() {
     const params = new URLSearchParams(new FormData(form));
     for (const [key, value] of [...params]) if (value === 'all') params.delete(key);
@@ -32,14 +38,14 @@ if (login) {
   }
   function errorMessage(error) {
     if (error.name === 'AbortError') return;
-    if (error.status === 401) { location.replace('/admin/login'); return; }
-    setText('admin-error', error.message);
+    if (error.status === 401) { location.replace(localPath('/admin/login')); return; }
+    setError('admin-error', error);
     document.getElementById('admin-error').hidden = false;
   }
   function bars(id, data) {
     const container = document.getElementById(id);
     container.replaceChildren();
-    if (!data.length) { const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = 'Nenhum resultado neste filtro.'; container.append(empty); return; }
+    if (!data.length) { const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = t('messages.emptyResults'); container.append(empty); return; }
     const total = data.reduce((sum, item) => sum + item.count, 0);
     for (const item of data) {
       const row = document.createElement('div'); row.className = 'bar-row';
@@ -47,11 +53,12 @@ if (login) {
       const label = document.createElement('span'); label.textContent = item.label;
       const count = document.createElement('b'); count.textContent = formatter.format(item.count);
       const bar = document.createElement('progress'); bar.max = total || 1; bar.value = item.count;
-      bar.setAttribute('aria-label', `${item.label}: ${item.count} resultados, ${percent(total ? item.count / total * 100 : 0)}`);
+      bar.setAttribute('aria-label', t('messages.barAria', { label: item.label, count: formatter.format(item.count), percent: percent(total ? item.count / total * 100 : 0) }));
       heading.append(label, count); row.append(heading, bar); container.append(row);
     }
   }
   function stats(data) {
+    lastStats = data;
     for (const key of ['started', 'completed', 'abandoned', 'shared', 'notShared']) {
       setText(`metric-${key}`, formatter.format(data[key]));
       setText(`funnel-${key}`, formatter.format(data[key]));
@@ -59,7 +66,7 @@ if (login) {
     setText('rate-completion', percent(data.completionRate));
     setText('rate-abandonment', percent(data.abandonmentRate));
     setText('rate-share', percent(data.shareRate));
-    setText('active-sessions', `${formatter.format(data.active)} em andamento`);
+    setText('active-sessions', t('messages.active', { count: formatter.format(data.active) }));
     document.getElementById('funnel-bar-started').value = data.started ? 100 : 0;
     document.getElementById('funnel-bar-completed').value = data.completionRate;
     document.getElementById('funnel-bar-shared').value = data.started ? data.shared / data.started * 100 : 0;
@@ -88,29 +95,29 @@ if (login) {
       const y = padding + (100 - point.authorityScore) / 200 * (height - 2 * padding);
       ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fillStyle = '#c3a7f780'; ctx.fill();
     }
-    canvas.setAttribute('aria-label', `Gráfico político: ${points.length} de ${pointsTotal} resultados, eixo econômico −100 a +100 e autoridade −100 a +100.`);
+    canvas.setAttribute('aria-label', t('messages.scatterAria', { count: formatter.format(points.length), total: formatter.format(pointsTotal) }));
     document.getElementById('scatter-empty').hidden = pointsTotal !== 0;
-    setText('scatter-count', `${formatter.format(points.length)} de ${formatter.format(pointsTotal)} pontos · sem identificadores`);
+    setText('scatter-count', t('messages.scatterCount', { count: formatter.format(points.length), total: formatter.format(pointsTotal) }));
     document.getElementById('load-points').hidden = points.length >= pointsTotal;
   }
   function table(data) {
     lastTable = data;
     const tbody = document.getElementById('results-table'); tbody.replaceChildren();
-    if (!data.data.length) { const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 9; cell.className = 'empty-state'; cell.textContent = 'Nenhuma sessão encontrada para estes filtros.'; row.append(cell); tbody.append(row); }
-    const date = value => value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+    if (!data.data.length) { const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 9; cell.className = 'empty-state'; cell.textContent = t('messages.emptySessions'); row.append(cell); tbody.append(row); }
+    const date = value => value ? new Date(value).toLocaleString(language(), { dateStyle: 'short', timeStyle: 'short' }) : '—';
     for (const session of data.data) {
       const row = document.createElement('tr');
-      const values = [session.uuid, session.status, `${session.currentQuestion}/40`, session.economicScore === null ? '—' : signed(session.economicScore), session.authorityScore === null ? '—' : signed(session.authorityScore), session.politicalLabel || '—', session.status !== 'COMPLETED' ? '—' : session.shared ? 'Sim' : 'Não', date(session.startedAt), date(session.completedAt)];
+      const values = [session.uuid, session.status, `${session.currentQuestion}/40`, session.economicScore === null ? '—' : signed(session.economicScore), session.authorityScore === null ? '—' : signed(session.authorityScore), session.labelKeys?.political ? t(`results.political.${session.labelKeys.political}`) : session.politicalLabel || '—', session.status !== 'COMPLETED' ? '—' : t(session.shared ? 'messages.yes' : 'messages.no'), date(session.startedAt), date(session.completedAt)];
       values.forEach((value, index) => {
         const cell = document.createElement('td');
-        if (index === 0) { cell.className = 'uuid-cell'; cell.title = session.uuid; if (session.status === 'COMPLETED') { const link = document.createElement('a'); link.href = `/resultado/${session.uuid}`; link.target = '_blank'; link.rel = 'noopener'; link.textContent = value; cell.append(link); } else cell.textContent = value; }
-        else if (index === 1) { const badge = document.createElement('span'); badge.className = `status-badge status-${session.status}`; badge.textContent = { STARTED: 'Em andamento', COMPLETED: 'Concluiu', ABANDONED: 'Abandonou' }[session.status]; cell.append(badge); }
+        if (index === 0) { cell.className = 'uuid-cell'; cell.title = session.uuid; if (session.status === 'COMPLETED') { const link = document.createElement('a'); link.href = localPath(`/resultado/${session.uuid}`); link.target = '_blank'; link.rel = 'noopener'; link.textContent = value; cell.append(link); } else cell.textContent = value; }
+        else if (index === 1) { const badge = document.createElement('span'); badge.className = `status-badge status-${session.status}`; badge.textContent = t(`messages.${session.status}`); cell.append(badge); }
         else cell.textContent = value;
         row.append(cell);
       }); tbody.append(row);
     }
-    setText('table-count', data.total ? `${formatter.format((data.page - 1) * data.limit + 1)}–${formatter.format(Math.min(data.page * data.limit, data.total))} de ${formatter.format(data.total)} sessões` : '0 sessões');
-    setText('page-label', `Página ${data.totalPages ? data.page : 0} de ${data.totalPages}`);
+    setText('table-count', data.total ? t('messages.tableCount', { start: formatter.format((data.page - 1) * data.limit + 1), end: formatter.format(Math.min(data.page * data.limit, data.total)), total: formatter.format(data.total) }) : t('messages.zeroSessions'));
+    setText('page-label', t('messages.page', { page: formatter.format(data.totalPages ? data.page : 0), total: formatter.format(data.totalPages) }));
     document.getElementById('previous-page').disabled = data.page <= 1;
     document.getElementById('next-page').disabled = data.page >= data.totalPages;
   }
@@ -129,16 +136,19 @@ if (login) {
     document.getElementById('admin-error').hidden = true;
     const query = filters().toString();
     const active = [...form.querySelectorAll('select')].filter(select => select.value !== 'all').map(select => select.selectedOptions[0].textContent);
-    setText('filter-description', active.length ? `Recorte ativo: ${active.join(' · ')}. As taxas usam somente as sessões deste recorte.` : 'Todas as sessões · números acumulados');
+    setText('filter-description', active.length ? t('messages.filter', { filters: active.join(' · ') }) : t('messages.allSessions'));
     const responses = await Promise.allSettled([
       api(`/admin/stats?${query}`, { signal }).then(data => { if (generation === current) stats(data); }),
-      api(`/admin/distribution?${query}`, { signal }).then(data => { if (generation === current) { bars('economic-chart', data.economic); bars('authority-chart', data.authority); bars('political-chart', data.political); } }),
+      api(`/admin/distribution?${query}`, { signal }).then(data => { if (generation === current) { lastDistribution = data; for (const axis of ['economic', 'authority', 'political']) bars(`${axis}-chart`, labels(data[axis], axis)); } }),
       api(`/admin/scatter?${query}&page=1&limit=1000`, { signal }).then(data => { if (generation === current) { points = data.data; pointsTotal = data.total; drawScatter(); } }),
       fetchTable(signal)
     ]);
     if (generation !== current) return;
     responses.forEach(response => { if (response.status === 'rejected') errorMessage(response.reason); });
-    if (responses.every(response => response.status === 'fulfilled')) setText('last-updated', `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`);
+    if (responses.every(response => response.status === 'fulfilled')) {
+      updatedAt = new Date();
+      setText('last-updated', t('messages.updated', { time: updatedAt.toLocaleTimeString(language(), { hour: '2-digit', minute: '2-digit' }) }));
+    }
     refreshBusy = false; document.getElementById('refresh').disabled = false;
   }
   async function changePage(direction = 0) {
@@ -168,8 +178,17 @@ if (login) {
       if (generation === current) { pointsPage++; points.push(...data.data); pointsTotal = data.total; drawScatter(); }
     } catch (error) { errorMessage(error); } finally { button.disabled = false; pointsBusy = false; }
   });
-  document.getElementById('logout').addEventListener('click', async () => { try { await api('/admin/logout', { method: 'POST' }); location.replace('/admin/login'); } catch (error) { errorMessage(error); } });
+  document.getElementById('logout').addEventListener('click', async () => { try { await api('/admin/logout', { method: 'POST' }); location.replace(localPath('/admin/login')); } catch (error) { errorMessage(error); } });
   document.querySelectorAll('.admin-sidebar nav a').forEach(link => link.addEventListener('click', () => { document.querySelector('.admin-sidebar nav .active')?.classList.remove('active'); link.classList.add('active'); }));
+  document.addEventListener('languagechange', () => {
+    if (lastStats) stats(lastStats);
+    if (lastTable) table(lastTable);
+    if (lastDistribution) for (const axis of ['economic', 'authority', 'political']) bars(`${axis}-chart`, labels(lastDistribution[axis], axis));
+    drawScatter();
+    const active = [...form.querySelectorAll('select')].filter(select => select.value !== 'all').map(select => select.selectedOptions[0].textContent);
+    setText('filter-description', active.length ? t('messages.filter', { filters: active.join(' · ') }) : t('messages.allSessions'));
+    if (updatedAt) setText('last-updated', t('messages.updated', { time: updatedAt.toLocaleTimeString(language(), { hour: '2-digit', minute: '2-digit' }) }));
+  });
   await refresh();
   setInterval(() => { if (!document.hidden && !refreshBusy && !tableBusy && !pointsBusy && page === 1) refresh(); }, 60_000);
 }

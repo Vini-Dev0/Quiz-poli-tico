@@ -70,14 +70,14 @@ try {
       assert.ok(response.ok, method + ' ' + path + ': ' + response.status);
       return {data:await response.json(), cookie:response.headers.get('set-cookie')};
     }
-    const landing = await fetch(origin);
+    const landing = await fetch(origin+'/pt-br/');
     const landingHtml = await landing.text();
     assert.match(landingHtml, /Descubra seu/);
-    assert.ok(landingHtml.includes('<link rel="canonical" href="'+publicOrigins[0]+'/">'));
+    assert.ok(landingHtml.includes('<link rel="canonical" href="'+publicOrigins[0]+'/pt-br/">'));
     const robots = await fetch(origin+'/robots.txt');
     assert.ok((await robots.text()).includes('Sitemap: '+publicOrigins[0]+'/sitemap.xml'));
     const sitemap = await fetch(origin+'/sitemap.xml');
-    assert.equal(((await sitemap.text()).match(/<loc>/g)||[]).length,5);
+    assert.equal(((await sitemap.text()).match(/<loc>/g)||[]).length,20);
     const catalogue = (await api('/quiz/questions')).data;
     assert.equal(catalogue.total,40);
     const started = (await api('/quiz/start','POST')).data;
@@ -91,12 +91,12 @@ try {
       assert.equal(completed.resultUrl,url);
       const resumed = (await api('/quiz/'+started.uuid,'GET',undefined,{...headers,'X-Quiz-Token':started.token})).data;
       assert.equal(resumed.resultUrl,url);
-      const publicResult = await fetch(origin + '/resultado/' + started.uuid,{headers});
+      const publicResult = await fetch(origin + '/pt-br/resultado/' + started.uuid,{headers});
       assert.match(publicResult.headers.get('x-robots-tag'),/noindex/);
       const html = await publicResult.text();
       assert.match(html,/og:title/);
-      assert.ok(html.includes('<link rel="canonical" href="'+url+'">'));
-      assert.ok(html.includes('<meta property="og:image" content="'+url+'/card.svg">'));
+      assert.ok(html.includes('<link rel="canonical" href="'+url.replace('/resultado/','/pt-br/resultado/')+'">'));
+      assert.ok(html.includes('<meta property="og:image" content="'+url.replace('/resultado/','/pt-br/resultado/')+'/card.svg">'));
     }
     await api('/quiz/'+started.uuid+'/share','POST');
     const login = await api('/admin/login','POST',{password:process.env.ADMIN_PASSWORD});

@@ -17,9 +17,9 @@ test('JSON-LD escapa HTML e mantém os valores sem permitir fechamento do script
 });
 test('nome do site e metadados usam o domínio escolhido com conteúdo real', () => {
   const metadata = pageMetadata(sitePages[0], 'safe-nonce');
-  assert.match(metadata, /canonical" href="https:\/\/ladopolitico\.online\/"/);
+  assert.match(metadata, /canonical" href="https:\/\/ladopolitico\.online\/pt-br\/"/);
   assert.match(metadata, /summary_large_image/);
-  assert.match(metadata, /social-card\.png/);
+  assert.match(metadata, /social-card-pt-br\.png/);
   assert.match(metadata, /google-site-verification" content="unit-verification-token/);
   const structured = JSON.parse(metadata.match(/nonce="safe-nonce">([^]*?)<\/script>/)[1]);
   assert.deepEqual(structured['@graph'].map(item => item['@type']), ['WebSite', 'WebPage']);
@@ -28,10 +28,10 @@ test('nome do site e metadados usam o domínio escolhido com conteúdo real', ()
 });
 test('sitemap contém somente URLs canônicas públicas, sem datas inventadas ou UUIDs', () => {
   const xml = sitemapXml();
-  assert.equal((xml.match(/<loc>/g) || []).length, sitePages.length);
+  assert.equal((xml.match(/<loc>/g) || []).length, sitePages.length * 4);
   assert.equal(new Set(sitePages.map(page => page.path)).size, sitePages.length);
   assert.doesNotMatch(xml, /resultado|admin|api|example\.com|localhost|lastmod|changefreq|priority/);
-  assert.match(xml, /https:\/\/ladopolitico\.online\/metodologia/);
+  assert.match(xml, /https:\/\/ladopolitico\.online\/pt-br\/metodologia/);
 });
 test('robots permite recursos públicos e resultados para que noindex seja lido', () => {
   const robots = robotsTxt();

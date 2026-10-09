@@ -1,0 +1,39 @@
+{
+  "economic": [
+    "极左",
+    "左翼",
+    "中间偏左",
+    "中间",
+    "中间偏右",
+    "右翼",
+    "激进右翼"
+  ],
+  "authority": [
+    "激进自由意志派",
+    "自由意志派",
+    "自由派",
+    "中间",
+    "温和威权倾向",
+    "威权倾向",
+    "强烈威权倾向"
+  ],
+  "political": {
+    "center": "中间立场",
+    "left": "左翼",
+    "right": "右翼",
+    "centerLibertarian": "自由意志中间派",
+    "centerAuthoritarian": "威权中间派",
+    "leftLibertarian": "自由意志左翼",
+    "leftAuthoritarian": "威权左翼",
+    "rightLibertarian": "自由意志右翼",
+    "rightAuthoritarian": "威权右翼"
+  },
+  "reading": "在此维度中，你的分类为{label}，分数为{score}，量表范围为−100至+100。",
+  "axisAria": "{axis}：{label}，{score}，量表范围为负100至正100",
+  "compass": "你的结果：经济{economic}，权威{authority}",
+  "shareTitle": "我的结果：{label}",
+  "shareText": "我了解了自己的政治立场！\n结果：{label}\n经济立场：{economicLabel}（{economic}）\n权威立场：{authorityLabel}（{authority}）\n参加测验：",
+  "description": "经济立场：{economicLabel}（{economic}）。权威立场：{authorityLabel}（{authority}）。同一结果的两个维度。",
+  "javascript": "请启用JavaScript以查看图表和分享结果。",
+  "cardFooter": "40道题，两个维度，新的视角。"
+}

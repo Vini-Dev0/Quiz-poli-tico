@@ -2,6 +2,8 @@
 
 API Express 5 em JavaScript/ESM, Node.js 22 e PostgreSQL via Prisma 6.19.3. O frontend é servido pelo mesmo processo na pasta `../frontend`.
 
+Os quatro idiomas e as rotas prefixadas são entregues pelo Express. Consulte o [guia de internacionalização](../deploy/I18N.md) para recursos, preferência, contratos da API e SEO. Não é necessária migration adicional ou variável de idioma.
+
 Para uma VPS com EasyPanel, use o [guia de deploy](../deploy/EASYPANEL.md): o Dockerfile recomendado está na raiz e os segredos ficam em App → Environment. O arquivo `.env` é opcional em runtime e não entra na imagem.
 
 ## Instalação
@@ -25,6 +27,9 @@ Em produção: `npm ci --omit=dev`, `npx prisma migrate deploy` e `npm start`. O
 
 ```sh
 npm test
+npm run lint
+npm run typecheck
+npm run build
 export TEST_DATABASE_URL='postgresql://quiz:quiz_local_only@localhost:5432/quiz?schema=quiz_test'
 DATABASE_URL="$TEST_DATABASE_URL" npx prisma migrate deploy
 npm run test:integration

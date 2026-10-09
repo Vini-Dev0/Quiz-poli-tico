@@ -1,0 +1,39 @@
+{
+  "economic": [
+    "Extrema izquierda",
+    "Izquierda",
+    "Centroizquierda",
+    "Centro",
+    "Centroderecha",
+    "Derecha",
+    "Derecha radical"
+  ],
+  "authority": [
+    "Libertario radical",
+    "Libertario",
+    "Liberal",
+    "Centro",
+    "Moderadamente autoritario",
+    "Autoritario",
+    "Fuertemente autoritario"
+  ],
+  "political": {
+    "center": "Centro",
+    "left": "Izquierda",
+    "right": "Derecha",
+    "centerLibertarian": "Centro libertario",
+    "centerAuthoritarian": "Centro autoritario",
+    "leftLibertarian": "Izquierda libertaria",
+    "leftAuthoritarian": "Izquierda autoritaria",
+    "rightLibertarian": "Derecha libertaria",
+    "rightAuthoritarian": "Derecha autoritaria"
+  },
+  "reading": "En este eje, tu resultado es {label}, con una puntuación de {score} en la escala de −100 a +100.",
+  "axisAria": "{axis}: {label}, {score} en la escala de menos 100 a más 100",
+  "compass": "Tu resultado: economía {economic}, autoridad {authority}",
+  "shareTitle": "Mi resultado: {label}",
+  "shareText": "¡Descubrí mi orientación política!\nResultado: {label}\nPerspectiva económica: {economicLabel} ({economic})\nPerspectiva de autoridad: {authorityLabel} ({authority})\nHaz el test:",
+  "description": "Perspectiva económica: {economicLabel} ({economic}). Perspectiva de autoridad: {authorityLabel} ({authority}). Dos dimensiones del mismo resultado.",
+  "javascript": "Activa JavaScript para ver el gráfico y compartir.",
+  "cardFooter": "40 preguntas. Dos ejes. Una nueva perspectiva."
+}

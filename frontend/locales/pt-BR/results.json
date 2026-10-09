@@ -1,0 +1,39 @@
+{
+  "economic": [
+    "Extrema esquerda",
+    "Esquerda",
+    "Centro-esquerda",
+    "Centro",
+    "Centro-direita",
+    "Direita",
+    "Direita radical"
+  ],
+  "authority": [
+    "Libertário radical",
+    "Libertário",
+    "Liberal",
+    "Centro",
+    "Autoritário moderado",
+    "Autoritário",
+    "Autoritário forte"
+  ],
+  "political": {
+    "center": "Centro",
+    "left": "Esquerda",
+    "right": "Direita",
+    "centerLibertarian": "Centro Libertária",
+    "centerAuthoritarian": "Centro Autoritária",
+    "leftLibertarian": "Esquerda Libertária",
+    "leftAuthoritarian": "Esquerda Autoritária",
+    "rightLibertarian": "Direita Libertária",
+    "rightAuthoritarian": "Direita Autoritária"
+  },
+  "reading": "Nesta visão, seu resultado é {label}, com pontuação {score} na escala de −100 a +100.",
+  "axisAria": "{axis}: {label}, {score} na escala de menos 100 a mais 100",
+  "compass": "Seu resultado: economia {economic}, autoridade {authority}",
+  "shareTitle": "Meu resultado: {label}",
+  "shareText": "Descobri meu posicionamento político!\nResultado: {label}\nVisão econômica: {economicLabel} ({economic})\nVisão de autoridade: {authorityLabel} ({authority})\nFaça o teste:",
+  "description": "Visão econômica: {economicLabel} ({economic}). Visão de autoridade: {authorityLabel} ({authority}). Duas dimensões do mesmo resultado.",
+  "javascript": "Ative JavaScript para ver o gráfico e compartilhar.",
+  "cardFooter": "40 perguntas. Dois eixos. Uma nova perspectiva."
+}

@@ -1,0 +1,197 @@
+{
+  "home": {
+    "title": "Political quiz: discover where you stand | Prisma",
+    "description": "Explore your political outlook with a free, anonymous 40-question quiz. See independent economic and authority scores and share your result."
+  },
+  "methodology": {
+    "title": "How the political quiz calculates your result | Prisma",
+    "heading": "How your quiz result is calculated",
+    "eyebrow": "OPEN METHODOLOGY",
+    "description": "Learn how Prisma works: 40 questions, answers from 1 to 5, two independent axes, and scores from −100 to +100. Understand the quiz’s limitations.",
+    "introduction": "Two values, calculated separately from your answers. Here are the scale, formula, and limitations of the tool.",
+    "sections": [
+      {
+        "heading": "The 40 statements and answer scale",
+        "paragraphs": [
+          "The current questionnaire has 40 statements: 20 contribute to the economic axis and 20 to the authority axis. Each statement has a direction and weight defined in the quiz catalogue. In the current version, all weights are 1."
+        ]
+      },
+      {
+        "heading": "Two independent axes",
+        "paragraphs": [
+          "The economic axis runs from −100 to +100, with left and right at its ends. The authority axis uses the same scale, from libertarian to authoritarian. Zero is the center of each scale.",
+          "An economic answer contributes only to the economic score. An authority answer contributes only to the authority score. Neither axis determines the other."
+        ]
+      },
+      {
+        "heading": "The result formula",
+        "paragraphs": [
+          "For each statement, the system multiplies the converted answer by its direction and weight. It then adds the contributions for one axis and divides by the largest possible absolute sum on that axis.",
+          "The final value is limited to −100 to +100 and rounded to two decimal places. If all answers are neutral, both scores are zero. The server calculates and saves the official result only after validating all 40 answers."
+        ]
+      },
+      {
+        "heading": "How classifications are assigned",
+        "paragraphs": [
+          "The names below identify ranges on this quiz’s scale. The table uses the same classifications as the official calculation.",
+          "The combined classification brings together both axes. Values between −10 and +10 are considered central in this methodology."
+        ]
+      },
+      {
+        "heading": "What this quiz can tell you",
+        "paragraphs": [
+          "The result summarizes your answers under these rules. The catalogue was proposed for this project and has not undergone psychometric validation. It is not a diagnosis, a representative population survey, or a recommendation about candidates, parties, or voting.",
+          "The classification does not replace your own description of yourself. It may change if you answer differently in another session."
+        ]
+      }
+    ],
+    "scale": [
+      "Strongly disagree: answer 1, converted to −2.",
+      "Disagree: answer 2, converted to −1.",
+      "Neutral / it depends: answer 3, converted to 0.",
+      "Agree: answer 4, converted to +1.",
+      "Strongly agree: answer 5, converted to +2."
+    ],
+    "formula": "contribution = (answer − 3) × direction × weight\nmaximum = sum of (2 × absolute direction × weight)\nscore = 100 × sum of contributions / maximum",
+    "table": {
+      "aria": "Classification ranges for both axes",
+      "caption": "Economic and authority score ranges",
+      "score": "Score",
+      "economic": "Economics",
+      "authority": "Authority",
+      "value": "value"
+    }
+  },
+  "about": {
+    "title": "About Prisma: a political quiz with two axes",
+    "heading": "A quiz to explore your answers",
+    "eyebrow": "ABOUT PRISMA",
+    "description": "Get to know Prisma, a free political outlook quiz with no sign-up. Learn what the result represents, its limitations, and how the site works.",
+    "introduction": "Prisma organizes your answers into economic and authority perspectives. The aim is to make them easy to explore, with the methodology openly available.",
+    "sections": [
+      {
+        "heading": "What you’ll find here",
+        "paragraphs": [
+          "A questionnaire with 40 statements, one question at a time, and five response options. When you finish, you receive two scores, separate classifications, a map, and a link to share your result.",
+          "The quiz is free and you don’t need an account. Participation is identified by a random session, without asking for your name, email, or phone number."
+        ]
+      },
+      {
+        "heading": "Transparency about the result",
+        "paragraphs": [
+          "Scores are calculated on the server from your answers. The [[/metodologia|methodology page]] explains conversion, normalization, and the ranges used by the quiz.",
+          "We do not present this tool as a scientifically validated test. It is exploratory and uses statements proposed for this project. Its values do not provide a definitive description of who you are."
+        ]
+      },
+      {
+        "heading": "Two axes, two interpretations",
+        "paragraphs": [
+          "The site calculates economics and authority independently. On the result page, each dimension has its own card, numerical value, and classification. The chart displays both values together."
+        ]
+      },
+      {
+        "heading": "Information before you take part",
+        "paragraphs": [
+          "Read the [[/perguntas-frequentes|frequently asked questions]] to understand the quiz flow, and the [[/privacidade|privacy page]] to see what information the application records."
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Political quiz privacy and data | Prisma",
+    "heading": "What data the quiz uses",
+    "eyebrow": "PRIVACY",
+    "description": "Learn what Prisma records: answers, progress, and results, without sign-up or required personal details. Understand public links and sharing.",
+    "introduction": "You can take part without providing personal details. This page describes the records needed to run the quiz and what appears at the result link.",
+    "sections": [
+      {
+        "heading": "Information we don’t ask for",
+        "paragraphs": [
+          "You don’t need to provide your name, email, phone number, Brazilian taxpayer ID (CPF), personal password, or address to take the quiz. The admin password is used only by the person managing the dashboard."
+        ]
+      },
+      {
+        "heading": "Participation records",
+        "paragraphs": [
+          "The application saves answers from 1 to 5, the current question, session status, start, activity, and completion times, and, once complete, scores and classifications. A random identifier is used for the session and its result.",
+          "The key used to resume and edit a quiz is kept in this browser tab’s storage. The server stores only its hash. The application temporarily uses IP addresses in memory for rate limiting; it does not save them in the participant table."
+        ]
+      },
+      {
+        "heading": "What’s public in a result",
+        "paragraphs": [
+          "Anyone with the URL can view that result’s scores and classifications. The public page does not show individual answers, the editing key, or admin data.",
+          "Personal result pages carry a no-index instruction for search engines. This does not make the URL private: anyone who receives it can still access it."
+        ]
+      },
+      {
+        "heading": "Sharing records",
+        "paragraphs": [
+          "Clicking a sharing button records an intent to share and the time of the first record. Multiple clicks still count as one shared result.",
+          "The site does not receive confirmation that a post was published and does not identify your social media profile. When you open an external service, that service’s rules apply to its page."
+        ]
+      },
+      {
+        "heading": "Storage and admin access",
+        "paragraphs": [
+          "Quiz records remain in the database. Closing the tab ends local access to the resume key but does not delete the saved record. This version does not automatically delete completed results.",
+          "The dashboard is protected by admin authentication and displays progress, results, and metrics. The site does not install advertising cookies or load external fonts, pixels, or analytics services. The admin login cookie is separate from quiz participation."
+        ]
+      }
+    ]
+  },
+  "faq": {
+    "title": "Political quiz frequently asked questions | Prisma",
+    "heading": "Your questions, answered before you begin",
+    "eyebrow": "FREQUENTLY ASKED QUESTIONS",
+    "description": "Answers about Prisma’s political quiz: cost, registration, answers, calculation, resuming, privacy, and sharing results.",
+    "introduction": "How the quiz works, what it shows, and how you can use your result.",
+    "aria": "Questions about the quiz",
+    "sections": [
+      {
+        "heading": "Want to check the calculation?",
+        "paragraphs": [
+          "The [[/metodologia|full methodology]] explains the answer scale, normalization formula, and classification ranges. Storage details are on the [[/privacidade|privacy page]]."
+        ]
+      }
+    ]
+  },
+  "items": [
+    {
+      "question": "How can I explore my political outlook with this quiz?",
+      "answer": "Prisma organizes your answers along two axes: economics and authority. Answer the 40 statements to see your position within the quiz’s scale, with separate scores and classifications for each dimension. The result is exploratory, not a definitive statement of your identity."
+    },
+    {
+      "question": "How does the political outlook quiz work?",
+      "answer": "You respond to 40 statements, one at a time, choosing an option from 1 to 5, from strongly disagree to strongly agree. When you finish, Prisma shows two independent scores, their classifications, and a two-axis map."
+    },
+    {
+      "question": "Is the quiz free, and do I need to register?",
+      "answer": "The quiz is free and does not require an account, name, email, or phone number. You can start directly from the home page. Admin access is separate and password protected."
+    },
+    {
+      "question": "What does the result show?",
+      "answer": "Your economic and authority perspectives appear in separate cards. Each includes a score from −100 to +100, a classification, and a visual scale. The map brings these values together without mixing the calculations."
+    },
+    {
+      "question": "Is the quiz scientifically validated?",
+      "answer": "No. Prisma is an exploratory tool with statements proposed for this project and no psychometric validation. The result summarizes your answers within the quiz’s methodology; it does not determine your identity or recommend how to vote."
+    },
+    {
+      "question": "Can I revise answers or continue later?",
+      "answer": "Before finishing, you can go back and revise your answers. Progress is saved on the server and identified in this browser tab. After {minutes} minutes of inactivity, an incomplete session counts as abandoned but can be resumed while the tab retains its access key. Closing the tab ends that local access."
+    },
+    {
+      "question": "Are my result and answers public?",
+      "answer": "Anyone who receives the result link can view it. The page shows only scores and classifications, not individual answers. Personal results carry a no-index instruction for search engines, but this is not password protection and does not make the link private."
+    },
+    {
+      "question": "How can I share my result?",
+      "answer": "When you finish, copy the link, use browser sharing, or choose WhatsApp, Facebook, X, or Telegram. For Instagram, the site copies the content for you to paste. The site records the sharing click as intent, without confirming a social media post."
+    },
+    {
+      "question": "Can I take the quiz again?",
+      "answer": "Yes. The link to explore the quiz again on the result page takes you to the home page. A new attempt creates a new session. A completed result is not changed by new answers."
+    }
+  ]
+}
